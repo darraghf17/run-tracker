@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Run Tracker">
+<meta name="theme-color" content="#080808">
+<title>Run Tracker — Darragh</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080808; --card: #111; --card2: #181818; --border: #222;
+    --accent: #e8ff47; --orange: #ff6b35; --red: #ff4757; --purple: #a78bfa;
+    --text: #f0f0f0; --muted: #666; --muted2: #444; --green: #2ecc71;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; font-weight:300; min-height:100vh; overscroll-behavior:none; }
+
+  /* NAV */
+  .nav { position:fixed; bottom:0; left:0; right:0; background:rgba(8,8,8,0.96); backdrop-filter:blur(20px); border-top:1px solid var(--border); display:flex; z-index:100; padding-bottom:env(safe-area-inset-bottom); }
+  .nav-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 0; background:none; border:none; color:var(--muted); font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; transition:color 0.2s; }
+  .nav-btn.active { color:var(--accent); }
+  .nav-btn svg { width:20px; height:20px; }
+
+  /* SCREENS */
+  .screen { display:none; padding:0 0 88px; min-height:100vh; }
+  .screen.active { display:block; }
+
+  /* HEADER */
+  .header { padding:52px 20px 16px; }
+  .header-label { font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
+  .header-title { font-family:'Bebas Neue',sans-serif; font-size:40px; letter-spacing:2px; line-height:1; }
+  .header-title span { color:var(--accent); }
+
+  /* CARDS */
+  .card { background:var(--card); border:1px solid var(--border); margin:0 16px 12px; padding:18px; }
+  .card-label { font-size:10px; letter-spacing:2.5px; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+
+  /* STATS ROW */
+  .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--border); margin:0 16px 12px; }
+  .stat-box { background:var(--card); padding:14px 10px; text-align:center; }
+  .stat-val { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:1px; color:var(--accent); line-height:1; }
+  .stat-label { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-top:3px; }
+
+  /* PROGRESS BAR (12 weeks) */
+  .prog-container { margin:0 16px 12px; }
+  .prog-label-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .prog-phase-label { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); }
+  .prog-week-label { font-family:'Bebas Neue',sans-serif; font-size:18px; color:var(--accent); letter-spacing:1px; }
+  .prog-track { height:4px; background:var(--border); border-radius:2px; overflow:hidden; margin-bottom:6px; }
+  .prog-fill { height:100%; background:var(--accent); transition:width 0.8s ease; border-radius:2px; }
+  .prog-phases { display:flex; gap:1px; }
+  .prog-phase { flex:1; text-align:center; font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--muted2); padding-top:4px; }
+  .prog-phase.active { color:var(--accent); }
+
+  /* SESSION CARDS */
+  .session-card { background:var(--card); border:1px solid var(--border); margin:0 16px 8px; padding:14px; display:flex; align-items:flex-start; gap:12px; }
+  .session-card.completed { border-color:rgba(232,255,71,0.35); }
+  .session-card.completed .session-check { background:var(--accent); color:#000; }
+  .session-check { width:30px; height:30px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; transition:all 0.2s; color:var(--muted); }
+  .session-info { flex:1; }
+  .session-day-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:3px; }
+  .session-name { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:1px; margin-bottom:3px; }
+  .session-desc { font-size:12px; color:#999; line-height:1.55; }
+  .pace-tag { display:inline-block; font-size:9px; padding:3px 7px; letter-spacing:1px; text-transform:uppercase; font-weight:500; margin-top:7px; }
+  .pace-easy { background:rgba(232,255,71,0.1); color:var(--accent); }
+  .pace-mod  { background:rgba(255,107,53,0.1); color:var(--orange); }
+  .pace-tempo{ background:rgba(255,71,87,0.1);  color:var(--red); }
+  .pace-mix  { background:rgba(167,139,250,0.1); color:var(--purple); }
+  .pace-race { background:rgba(46,204,113,0.12); color:var(--green); }
+  .session-dur { font-size:10px; color:var(--muted); margin-top:5px; letter-spacing:0.5px; }
+  .session-adapt-tag { font-size:9px; padding:2px 6px; margin-top:5px; display:inline-block; border-radius:2px; }
+  .adapt-easier { background:rgba(46,204,113,0.12); color:var(--green); }
+  .adapt-harder { background:rgba(255,71,87,0.1); color:var(--red); }
+
+  .start-btn { display:block; margin-top:10px; padding:7px 12px; background:rgba(232,255,71,0.08); border:1px solid rgba(232,255,71,0.2); color:var(--accent); font-size:10px; letter-spacing:2px; text-transform:uppercase; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.2s; }
+  .start-btn:active { background:rgba(232,255,71,0.18); }
+
+  /* WEEK HEADER */
+  .week-header-bar { display:flex; align-items:center; gap:10px; padding:18px 16px 8px; }
+  .week-header-num { font-family:'Bebas Neue',sans-serif; font-size:12px; letter-spacing:3px; color:var(--muted); }
+  .week-header-theme { font-family:'Bebas Neue',sans-serif; font-size:19px; letter-spacing:2px; }
+  .week-header-focus { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-left:auto; }
+  .week-rating-chip { font-size:9px; padding:3px 8px; border-radius:20px; letter-spacing:1px; text-transform:uppercase; margin-top:0; }
+  .rating-easy { background:rgba(46,204,113,0.15); color:var(--green); border:1px solid rgba(46,204,113,0.3); }
+  .rating-right { background:rgba(232,255,71,0.1); color:var(--accent); border:1px solid rgba(232,255,71,0.2); }
+  .rating-hard { background:rgba(255,71,87,0.1); color:var(--red); border:1px solid rgba(255,71,87,0.25); }
+
+  .divider { height:1px; background:var(--border); margin:8px 16px; }
+
+  /* LOG FORM */
+  .form-group { margin-bottom:14px; }
+  .form-label { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:7px; display:block; }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  input,select,textarea { width:100%; background:var(--card2); border:1px solid var(--border); color:var(--text); font-family:'DM Sans',sans-serif; font-size:16px; font-weight:300; padding:11px 13px; outline:none; transition:border-color 0.2s; -webkit-appearance:none; border-radius:0; }
+  input:focus,select:focus,textarea:focus { border-color:var(--accent); }
+  textarea { resize:none; height:76px; font-size:14px; }
+  select option { background:#111; }
+
+  /* RPE SLIDER */
+  .rpe-wrap { position:relative; }
+  .rpe-slider { -webkit-appearance:none; appearance:none; width:100%; height:4px; background:var(--border); border:none; padding:0; cursor:pointer; }
+  .rpe-slider::-webkit-slider-thumb { -webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:var(--accent); cursor:pointer; }
+  .rpe-labels { display:flex; justify-content:space-between; margin-top:6px; }
+  .rpe-label { font-size:9px; letter-spacing:1px; color:var(--muted); }
+  .rpe-val { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--accent); text-align:center; line-height:1; margin-bottom:4px; }
+
+  .btn-primary { width:100%; background:var(--accent); color:#000; border:none; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:3px; padding:15px; cursor:pointer; transition:opacity 0.2s; }
+  .btn-primary:active { opacity:0.8; }
+  .btn-secondary { width:100%; background:transparent; color:var(--muted); border:1px solid var(--border); font-family:'DM Sans',sans-serif; font-size:13px; letter-spacing:1px; padding:11px; cursor:pointer; margin-top:8px; transition:all 0.2s; }
+  .btn-secondary:hover { border-color:var(--muted); color:var(--text); }
+
+  /* RUN HISTORY */
+  .run-item { background:var(--card); border:1px solid var(--border); margin:0 16px 8px; padding:14px; display:flex; align-items:center; gap:12px; }
+  .run-date-box { text-align:center; min-width:40px; }
+  .run-date-day { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:1px; line-height:1; color:var(--accent); }
+  .run-date-month { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); }
+  .run-divider { width:1px; height:38px; background:var(--border); }
+  .run-stats { flex:1; }
+  .run-main { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; margin-bottom:2px; }
+  .run-sub { font-size:11px; color:var(--muted); letter-spacing:0.5px; }
+  .run-pace-badge { font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:1px; color:var(--accent); text-align:right; }
+  .run-pace-label { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); text-align:right; }
+  .rpe-badge { display:inline-block; font-size:10px; padding:2px 7px; border-radius:2px; margin-top:3px; font-weight:500; }
+
+  /* PACE ZONES */
+  .pace-zone-row { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .pace-zone-row:last-child { border-bottom:none; }
+
+  /* EMPTY */
+  .empty { text-align:center; padding:56px 20px; color:var(--muted); }
+  .empty-icon { font-size:44px; margin-bottom:12px; opacity:0.4; }
+  .empty-text { font-size:14px; line-height:1.6; }
+
+  /* TOAST */
+  .toast { position:fixed; bottom:96px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--accent); color:#000; font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:2px; padding:10px 22px; opacity:0; transition:all 0.3s; pointer-events:none; z-index:200; white-space:nowrap; }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* MODAL */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:300; display:none; align-items:flex-end; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal-box { background:var(--card); border-top:1px solid var(--border); width:100%; max-width:480px; padding:28px 20px 40px; max-height:88vh; overflow-y:auto; }
+  .modal-title { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:2px; margin-bottom:4px; }
+  .modal-sub { font-size:12px; color:var(--muted); margin-bottom:20px; letter-spacing:0.5px; }
+  .checklist-item { display:flex; align-items:center; gap:12px; padding:13px 0; border-bottom:1px solid var(--border); cursor:pointer; }
+  .checklist-item:last-of-type { border-bottom:none; }
+  .check-box { width:26px; height:26px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.2s; font-size:13px; }
+  .check-box.checked { background:var(--accent); border-color:var(--accent); color:#000; }
+  .check-text { font-size:14px; font-weight:300; }
+  .check-text.checked { color:var(--muted); text-decoration:line-through; }
+
+  /* RATING BUTTONS */
+  .rating-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:16px; }
+  .rating-btn { padding:14px 8px; border:1px solid var(--border); background:transparent; color:var(--text); font-family:'DM Sans',sans-serif; font-size:12px; letter-spacing:0.5px; cursor:pointer; transition:all 0.2s; line-height:1.4; text-align:center; }
+  .rating-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+  /* STATS SCREEN */
+  .week-summary-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:0 16px 12px; }
+  .summary-box { background:var(--card); border:1px solid var(--border); padding:14px; }
+  .summary-val { font-family:'Bebas Neue',sans-serif; font-size:30px; color:var(--accent); letter-spacing:1px; line-height:1; }
+  .summary-label { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+
+  /* PACE CALC */
+  .calc-result { background:var(--card2); border:1px solid rgba(232,255,71,0.2); padding:18px; text-align:center; margin-top:16px; }
+  .calc-result-val { font-family:'Bebas Neue',sans-serif; font-size:48px; color:var(--accent); letter-spacing:2px; line-height:1; }
+  .calc-result-label { font-size:11px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-top:4px; }
+  .calc-tabs { display:flex; gap:1px; background:var(--border); margin-bottom:16px; }
+  .calc-tab { flex:1; padding:11px; text-align:center; background:var(--card2); font-size:11px; letter-spacing:2px; text-transform:uppercase; cursor:pointer; color:var(--muted); transition:all 0.2s; border:none; font-family:'DM Sans',sans-serif; }
+  .calc-tab.active { background:rgba(232,255,71,0.08); color:var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- ===== HOME ===== -->
+<div class="screen active" id="screen-home">
+  <div class="header">
+    <div class="header-label" id="home-greeting">Good morning</div>
+    <div class="header-title">DARRAGH'S<br><span>RUNS</span></div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-val" id="stat-runs">0</div><div class="stat-label">Runs Done</div></div>
+    <div class="stat-box"><div class="stat-val" id="stat-km">0</div><div class="stat-label">Total KM</div></div>
+    <div class="stat-box"><div class="stat-val" id="stat-week">W1</div><div class="stat-label">Current Week</div></div>
+  </div>
+
+  <div class="prog-container">
+    <div class="prog-label-row">
+      <div class="prog-phase-label" id="prog-phase-name">Phase 1 — Base</div>
+      <div class="prog-week-label" id="prog-week-label">Week 1 of 12</div>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    <div class="prog-phases">
+      <div class="prog-phase active" id="phase-1">Base</div>
+      <div class="prog-phase" id="phase-2">Build</div>
+      <div class="prog-phase" id="phase-3">Race Ready</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Last Run</div>
+    <div id="last-run-content">
+      <div class="empty"><div class="empty-icon">👟</div><div class="empty-text">No runs logged yet.<br>Hit Log to record your first session.</div></div>
+    </div>
+  </div>
+
+  <div class="card" id="pace-zones-card"></div>
+
+  <div class="card" id="install-card" style="display:none">
+    <div class="card-label">📱 Add to Home Screen</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.8">
+      <span style="color:var(--text)">iOS Safari:</span> Tap <span style="color:var(--accent)">Share ↑</span> → <span style="color:var(--accent)">Add to Home Screen</span><br>
+      <span style="color:var(--text)">Android Chrome:</span> Tap <span style="color:var(--accent)">⋮ Menu</span> → <span style="color:var(--accent)">Add to Home Screen</span>
+    </div>
+    <button class="btn-secondary" style="margin-top:10px" onclick="dismissInstall()">Got it — don't show again</button>
+  </div>
+</div>
+
+<!-- ===== PROGRAM ===== -->
+<div class="screen" id="screen-program">
+  <div class="header">
+    <div class="header-label">12-Week Plan · Adaptive</div>
+    <div class="header-title">YOUR<br><span>PROGRAM</span></div>
+  </div>
+  <div id="program-list"></div>
+</div>
+
+<!-- ===== LOG ===== -->
+<div class="screen" id="screen-log">
+  <div class="header">
+    <div class="header-label">Record Session</div>
+    <div class="header-title">LOG A<br><span>RUN</span></div>
+  </div>
+  <div class="card">
+    <div class="form-group">
+      <label class="form-label">Date</label>
+      <input type="date" id="log-date">
+    </div>
+    <div class="form-row form-group">
+      <div><label class="form-label">Distance (km)</label><input type="number" id="log-dist" placeholder="e.g. 4.2" step="0.01" min="0"></div>
+      <div><label class="form-label">Duration (mm:ss)</label><input type="text" id="log-time" placeholder="e.g. 28:30"></div>
+    </div>
+    <div class="form-row form-group">
+      <div><label class="form-label">Avg Pace (/km)</label><input type="text" id="log-pace" placeholder="auto" readonly style="color:var(--muted)"></div>
+      <div><label class="form-label">Avg HR (bpm)</label><input type="number" id="log-hr" placeholder="e.g. 142"></div>
+    </div>
+    <div class="form-row form-group">
+      <div><label class="form-label">Calories</label><input type="number" id="log-cal" placeholder="e.g. 280"></div>
+      <div>
+        <label class="form-label">Session Type</label>
+        <select id="log-type">
+          <option value="">Select...</option>
+          <option value="easy">Easy Run</option>
+          <option value="moderate">Moderate Run</option>
+          <option value="tempo">Tempo / Intervals</option>
+          <option value="long">Long Run</option>
+          <option value="race">5K Time Trial</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Effort — RPE</label>
+      <div class="rpe-val" id="rpe-display">5</div>
+      <div class="rpe-wrap"><input type="range" class="rpe-slider" id="log-rpe" min="1" max="10" value="5" step="1"></div>
+      <div class="rpe-labels"><span class="rpe-label">1 — Very Easy</span><span class="rpe-label">10 — Max</span></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes (optional)</label>
+      <textarea id="log-notes" placeholder="How did it feel? Any pain? Pace on target?"></textarea>
+    </div>
+    <button class="btn-primary" onclick="saveRun()">SAVE RUN</button>
+    <button class="btn-secondary" onclick="clearForm()">Clear form</button>
+  </div>
+</div>
+
+<!-- ===== STATS ===== -->
+<div class="screen" id="screen-stats">
+  <div class="header">
+    <div class="header-label">Your Progress</div>
+    <div class="header-title">WEEKLY<br><span>STATS</span></div>
+  </div>
+  <div style="padding:0 16px 8px;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted)">This Week</div>
+  <div class="week-summary-row">
+    <div class="summary-box"><div class="summary-val" id="ws-runs">0</div><div class="summary-label">Sessions Done</div></div>
+    <div class="summary-box"><div class="summary-val" id="ws-planned">3</div><div class="summary-label">Sessions Planned</div></div>
+    <div class="summary-box"><div class="summary-val" id="ws-km">0.0</div><div class="summary-label">KM This Week</div></div>
+    <div class="summary-box"><div class="summary-val" id="ws-rpe">—</div><div class="summary-label">Avg RPE</div></div>
+  </div>
+  <div class="card" style="margin-top:4px">
+    <div class="card-label">Avg Pace This Week</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--accent);letter-spacing:2px;line-height:1" id="ws-pace">—</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:1px">per kilometre</div>
+  </div>
+  <div style="padding:0 16px 8px;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-top:4px">All Time</div>
+  <div class="week-summary-row">
+    <div class="summary-box"><div class="summary-val" id="at-runs">0</div><div class="summary-label">Total Runs</div></div>
+    <div class="summary-box"><div class="summary-val" id="at-km">0</div><div class="summary-label">Total KM</div></div>
+    <div class="summary-box"><div class="summary-val" id="at-rpe">—</div><div class="summary-label">Avg RPE</div></div>
+    <div class="summary-box"><div class="summary-val" id="at-sessions">0</div><div class="summary-label">Sessions ✓</div></div>
+  </div>
+  <div id="history-list-stats"></div>
+</div>
+
+<!-- ===== CALC ===== -->
+<div class="screen" id="screen-calc">
+  <div class="header">
+    <div class="header-label">Run Calculator</div>
+    <div class="header-title">PACE<br><span>CALC</span></div>
+  </div>
+  <div class="card">
+    <div class="calc-tabs">
+      <button class="calc-tab active" onclick="switchCalcTab('pace', this)">Find Pace</button>
+      <button class="calc-tab" onclick="switchCalcTab('time', this)">Find Time</button>
+      <button class="calc-tab" onclick="switchCalcTab('dist', this)">Find Dist</button>
+    </div>
+
+    <!-- FIND PACE -->
+    <div id="calc-pace">
+      <div class="form-group"><label class="form-label">Distance (km)</label><input type="number" id="c-dist" placeholder="e.g. 5" step="0.01" oninput="calcPaceResult()"></div>
+      <div class="form-group"><label class="form-label">Target Time (mm:ss or hh:mm:ss)</label><input type="text" id="c-time" placeholder="e.g. 30:00" oninput="calcPaceResult()"></div>
+      <div class="calc-result" id="r-pace" style="display:none">
+        <div class="calc-result-val" id="rv-pace">—</div>
+        <div class="calc-result-label">min/km required pace</div>
+      </div>
+    </div>
+
+    <!-- FIND TIME -->
+    <div id="calc-time" style="display:none">
+      <div class="form-group"><label class="form-label">Distance (km)</label><input type="number" id="c-dist2" placeholder="e.g. 5" step="0.01" oninput="calcTimeResult()"></div>
+      <div class="form-group"><label class="form-label">Your Pace (mm:ss /km)</label><input type="text" id="c-pace2" placeholder="e.g. 6:00" oninput="calcTimeResult()"></div>
+      <div class="calc-result" id="r-time" style="display:none">
+        <div class="calc-result-val" id="rv-time">—</div>
+        <div class="calc-result-label">total finish time</div>
+      </div>
+    </div>
+
+    <!-- FIND DIST -->
+    <div id="calc-dist" style="display:none">
+      <div class="form-group"><label class="form-label">Time Available (mm:ss or hh:mm:ss)</label><input type="text" id="c-time3" placeholder="e.g. 45:00" oninput="calcDistResult()"></div>
+      <div class="form-group"><label class="form-label">Your Pace (mm:ss /km)</label><input type="text" id="c-pace3" placeholder="e.g. 7:00" oninput="calcDistResult()"></div>
+      <div class="calc-result" id="r-dist" style="display:none">
+        <div class="calc-result-val" id="rv-dist">—</div>
+        <div class="calc-result-label">km you can cover</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="calc-quick-targets"></div>
+</div>
+
+<!-- ===== NAV ===== -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="switchScreen('home',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+    Home
+  </button>
+  <button class="nav-btn" onclick="switchScreen('program',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+    Program
+  </button>
+  <button class="nav-btn" onclick="switchScreen('log',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>
+    Log
+  </button>
+  <button class="nav-btn" onclick="switchScreen('stats',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+    Stats
+  </button>
+  <button class="nav-btn" onclick="switchScreen('calc',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h8M8 14h4"/></svg>
+    Calc
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<!-- ===== PRE-RUN CHECKLIST MODAL ===== -->
+<div class="modal-overlay" id="checklist-modal" onclick="closeChecklist(event)">
+  <div class="modal-box">
+    <div class="modal-title">PRE-RUN CHECKLIST</div>
+    <div class="modal-sub" id="checklist-session-name">Before you head out — tick everything off</div>
+    <div id="checklist-items"></div>
+    <button class="btn-primary" style="margin-top:20px" onclick="startSession()">LET'S GO 🏃</button>
+    <button class="btn-secondary" onclick="closeChecklistDirect()">Close</button>
+  </div>
+</div>
+
+<!-- ===== WEEKLY REVIEW MODAL ===== -->
+<div class="modal-overlay" id="review-modal" onclick="closeReview(event)">
+  <div class="modal-box">
+    <div class="modal-title">WEEK <span id="review-week-num">1</span> DONE</div>
+    <div class="modal-sub">How did the week feel overall? This adjusts next week's programme.</div>
+    <div class="rating-row">
+      <button class="rating-btn" onclick="saveWeekRating('too_easy')">😌 Too Easy<br><span style="font-size:10px;color:var(--muted)">Next week harder</span></button>
+      <button class="rating-btn" onclick="saveWeekRating('about_right')" style="border-color:var(--accent);color:var(--accent)">✓ About Right<br><span style="font-size:10px;color:var(--muted)">Stay on track</span></button>
+      <button class="rating-btn" onclick="saveWeekRating('too_hard')">😤 Too Hard<br><span style="font-size:10px;color:var(--muted)">Ease off a bit</span></button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// PROGRAMME DATA — 12 WEEKS
+// ============================================================
+const PROGRAM = [
+  { week:1, theme:"REAWAKEN", phase:1, focus:"Ankle-aware · Easy only",
+    sessions:[
+      { day:"Monday",    name:"Run / Walk",       pace:"easy",  dur:"~30 mins",
+        desc:"5 min walk · 8 × (2 min run / 1 min walk) · 5 min walk cool-down. Focus on form and how the ankle feels.",
+        desc_easy:"5 min walk · 6 × (2 min run / 1 min walk) · 5 min walk. Keep it very short — feel your way back.",
+        desc_hard:"5 min walk · 10 × (2 min run / 1 min walk) · 5 min walk. Push the reps if it feels comfortable." },
+      { day:"Wednesday", name:"Continuous Easy",  pace:"easy",  dur:"~30 mins",
+        desc:"5 min walk · 20 min continuous run — no stopping · 5 min walk. Don't chase pace this week.",
+        desc_easy:"5 min walk · 15 min continuous run · 5 min walk. First continuous run back, keep it relaxed.",
+        desc_hard:"5 min walk · 25 min continuous run · 5 min walk. If the legs feel good, extend slightly." },
+      { day:"Friday",    name:"Long Easy Run",    pace:"easy",  dur:"~38 mins",
+        desc:"5 min walk · 28 min continuous run · 5 min walk. Longest of Week 1 — time on feet, easy effort.",
+        desc_easy:"5 min walk · 22 min continuous run · 5 min walk. Don't push it on your first week back.",
+        desc_hard:"5 min walk · 33 min continuous run · 5 min walk. If it's flowing, add a few extra minutes." }
+    ]
+  },
+  { week:2, theme:"PUSH HARDER", phase:1, focus:"First moderate efforts · Strides",
+    sessions:[
+      { day:"Monday",    name:"Moderate Run",      pace:"mod",   dur:"~35 mins",
+        desc:"5 min walk · 25 min continuous at moderate pace — breathing noticeably harder · 5 min walk.",
+        desc_easy:"5 min walk · 20 min moderate · 5 min walk. Step up from Week 1 but don't overdo it.",
+        desc_hard:"5 min walk · 30 min moderate · 5 min walk. Push the duration if Week 1 felt comfortable." },
+      { day:"Wednesday", name:"Easy + Strides",    pace:"mix",   dur:"~38 mins",
+        desc:"5 min walk · 20 min easy run · 5 × 30 sec hard pickups with 60 sec walk recovery · 5 min walk.",
+        desc_easy:"5 min walk · 18 min easy run · 3 × 30 sec pickups, 90 sec walk · 5 min walk. Fewer strides.",
+        desc_hard:"5 min walk · 22 min easy run · 7 × 30 sec hard pickups, 60 sec walk · 5 min walk. More strides." },
+      { day:"Fri/Sat",   name:"Long Moderate Run", pace:"mod",   dur:"~42 mins",
+        desc:"5 min walk · 32 min at moderate pace · 5 min walk. Key session of the week — hold it all the way.",
+        desc_easy:"5 min walk · 26 min moderate · 5 min walk. Build on Wednesday without overdoing it.",
+        desc_hard:"5 min walk · 36 min moderate · 5 min walk. Extra miles if Week 1 rating was Too Easy." }
+    ]
+  },
+  { week:3, theme:"EXTEND + BITE", phase:1, focus:"Tempo begins · Longest run so far",
+    sessions:[
+      { day:"Monday",    name:"Tempo Intervals",  pace:"tempo", dur:"~48 mins",
+        desc:"5 min walk · 10 min easy · 3 × 7 min tempo with 90 sec jog between · 5 min easy · 5 min walk.",
+        desc_easy:"5 min walk · 10 min easy · 2 × 7 min tempo, 2 min jog · 5 min easy · 5 min walk. Two reps only.",
+        desc_hard:"5 min walk · 10 min easy · 4 × 7 min tempo, 90 sec jog · 5 min easy · 5 min walk. Four reps." },
+      { day:"Wednesday", name:"Moderate Steady",  pace:"mod",   dur:"~40 mins",
+        desc:"5 min walk · 30 min continuous moderate — no intervals, lock in and hold the full 30 · 5 min walk.",
+        desc_easy:"5 min walk · 25 min moderate · 5 min walk. Keep it honest but don't push after Monday.",
+        desc_hard:"5 min walk · 33 min moderate · 5 min walk. Extra few minutes if feeling strong." },
+      { day:"Saturday",  name:"Long Easy Run",    pace:"easy",  dur:"~50 mins",
+        desc:"5 min walk · 40 min continuous easy run · 5 min walk. Truly easy — save the legs for Week 4.",
+        desc_easy:"5 min walk · 33 min easy · 5 min walk. Long but controlled after a tough tempo week.",
+        desc_hard:"5 min walk · 45 min easy · 5 min walk. Build the aerobic base with a longer effort." }
+    ]
+  },
+  { week:4, theme:"DELIVER", phase:1, focus:"Taper + 5K time trial",
+    sessions:[
+      { day:"Monday",    name:"Tempo Run",        pace:"tempo", dur:"~48 mins",
+        desc:"5 min walk · 10 min easy · 18 min at tempo pace — hold it, don't drift · 10 min easy · 5 min walk.",
+        desc_easy:"5 min walk · 10 min easy · 14 min tempo · 10 min easy · 5 min walk. Shorter tempo — save for Saturday.",
+        desc_hard:"5 min walk · 10 min easy · 20 min tempo · 10 min easy · 5 min walk. Strong effort before taper." },
+      { day:"Wednesday", name:"Easy Shakeout",    pace:"easy",  dur:"~30 mins",
+        desc:"5 min walk · 20 min genuinely easy run · 5 min walk. Active recovery only — legs must be fresh.",
+        desc_easy:"5 min walk · 15 min very easy run · 5 min walk. Short and easy — all about Saturday.",
+        desc_hard:"5 min walk · 22 min easy run · 5 min walk. Slightly longer shakeout but keep it effortless." },
+      { day:"Saturday",  name:"5K Time Trial 🏁", pace:"race",  dur:"~45 mins",
+        desc:"10 min easy warm-up · Run 5K flat out · Start the first km slightly controlled, then build · Note your time.",
+        desc_easy:"10 min easy warm-up · 5K at strong but controlled effort — no need to blow up · Cool down well.",
+        desc_hard:"10 min easy warm-up · 5K absolutely flat out — this is your benchmark · Compare to ~30 min baseline." }
+    ]
+  },
+  { week:5, theme:"RECHARGE", phase:2, focus:"Active recovery · Back to volume",
+    sessions:[
+      { day:"Monday",    name:"Recovery Run",      pace:"easy",  dur:"~32 mins",
+        desc:"5 min walk · 22 min very easy — slower than you think is necessary · 5 min walk. Let Week 4 sink in.",
+        desc_easy:"5 min walk · 18 min easy · 5 min walk. Pure recovery — keep the HR low.",
+        desc_hard:"5 min walk · 26 min easy · 5 min walk. A bit more volume if the 5K went really well." },
+      { day:"Wednesday", name:"Easy + Strides",   pace:"mix",   dur:"~36 mins",
+        desc:"5 min walk · 22 min easy · 4 × 30 sec hard pickups, 90 sec walk · 5 min walk. Wake the speed back up.",
+        desc_easy:"5 min walk · 20 min easy · 3 × 30 sec pickups · 5 min walk. Fewer strides, keep it light.",
+        desc_hard:"5 min walk · 24 min easy · 6 × 30 sec pickups · 5 min walk. More strides to sharpen the legs." },
+      { day:"Saturday",  name:"Moderate Run",      pace:"mod",   dur:"~40 mins",
+        desc:"5 min walk · 30 min moderate · 5 min walk. Back to proper work after the rest days.",
+        desc_easy:"5 min walk · 25 min moderate · 5 min walk. Don't rush the return to intensity.",
+        desc_hard:"5 min walk · 34 min moderate · 5 min walk. Solid effort to bridge into Week 6." }
+    ]
+  },
+  { week:6, theme:"STRONGER BASE", phase:2, focus:"Volume increase · Longer intervals",
+    sessions:[
+      { day:"Monday",    name:"Moderate Run",      pace:"mod",   dur:"~42 mins",
+        desc:"5 min walk · 32 min moderate · 5 min walk. Extend Week 5's moderate — same effort, more time.",
+        desc_easy:"5 min walk · 27 min moderate · 5 min walk. Build steadily without overdoing it.",
+        desc_hard:"5 min walk · 36 min moderate · 5 min walk. Push the volume if you're feeling strong." },
+      { day:"Wednesday", name:"Tempo Intervals",  pace:"tempo", dur:"~51 mins",
+        desc:"5 min walk · 10 min easy · 3 × 8 min tempo, 90 sec jog · 5 min easy · 5 min walk. Slightly longer reps.",
+        desc_easy:"5 min walk · 10 min easy · 3 × 6 min tempo, 2 min jog · 5 min easy · 5 min walk.",
+        desc_hard:"5 min walk · 10 min easy · 4 × 8 min tempo, 90 sec jog · 5 min easy · 5 min walk." },
+      { day:"Saturday",  name:"Long Easy Run",    pace:"easy",  dur:"~55 mins",
+        desc:"5 min walk · 45 min continuous easy run · 5 min walk. Biggest run so far — keep it truly easy.",
+        desc_easy:"5 min walk · 38 min easy · 5 min walk. Long but comfortable — don't blow up.",
+        desc_hard:"5 min walk · 50 min easy · 5 min walk. Extra time on feet to build the aerobic engine." }
+    ]
+  },
+  { week:7, theme:"TEMPO BLOCK", phase:2, focus:"Sustained tempo · Peak long run",
+    sessions:[
+      { day:"Monday",    name:"Sustained Tempo",  pace:"tempo", dur:"~52 mins",
+        desc:"5 min walk · 10 min easy · 22 min continuous tempo · 10 min easy · 5 min walk. No stopping in the tempo block.",
+        desc_easy:"5 min walk · 10 min easy · 16 min tempo · 10 min easy · 5 min walk.",
+        desc_hard:"5 min walk · 10 min easy · 25 min tempo · 10 min easy · 5 min walk." },
+      { day:"Wednesday", name:"Moderate Steady",  pace:"mod",   dur:"~45 mins",
+        desc:"5 min walk · 35 min moderate · 5 min walk. Mid-week steady effort — don't go into tempo territory.",
+        desc_easy:"5 min walk · 28 min moderate · 5 min walk.",
+        desc_hard:"5 min walk · 38 min moderate · 5 min walk." },
+      { day:"Saturday",  name:"Long Run",         pace:"easy",  dur:"~60 mins",
+        desc:"5 min walk · 50 min continuous easy run · 5 min walk. Longest run of Phase 2 — slow is right.",
+        desc_easy:"5 min walk · 42 min easy · 5 min walk.",
+        desc_hard:"5 min walk · 55 min easy · 5 min walk. Nearly an hour on feet — strong base." }
+    ]
+  },
+  { week:8, theme:"PEAK VOLUME", phase:2, focus:"Highest mileage week · Kilometre reps",
+    sessions:[
+      { day:"Monday",    name:"Kilometre Reps",   pace:"tempo", dur:"~60 mins",
+        desc:"5 min walk · 10 min easy · 5 × 1 km at tempo pace, 90 sec jog between · 10 min easy · 5 min walk.",
+        desc_easy:"5 min walk · 10 min easy · 4 × 1 km at tempo, 2 min jog · 10 min easy · 5 min walk.",
+        desc_hard:"5 min walk · 10 min easy · 6 × 1 km at tempo, 90 sec jog · 10 min easy · 5 min walk." },
+      { day:"Wednesday", name:"Moderate Run",      pace:"mod",   dur:"~45 mins",
+        desc:"5 min walk · 35 min moderate · 5 min walk. Solid mid-week session after hard Monday.",
+        desc_easy:"5 min walk · 28 min moderate · 5 min walk.",
+        desc_hard:"5 min walk · 38 min moderate · 5 min walk." },
+      { day:"Saturday",  name:"Long Run",         pace:"easy",  dur:"~65 mins",
+        desc:"5 min walk · 55 min easy run · 5 min walk. Longest run of the entire programme — slow and steady.",
+        desc_easy:"5 min walk · 48 min easy · 5 min walk. Still very long — take it at a comfortable pace.",
+        desc_hard:"5 min walk · 60 min easy · 5 min walk. An hour on feet — massive aerobic gain." }
+    ]
+  },
+  { week:9, theme:"SHARPEN", phase:3, focus:"Speed work · 800m reps",
+    sessions:[
+      { day:"Monday",    name:"800m Reps",        pace:"tempo", dur:"~58 mins",
+        desc:"5 min walk · 10 min easy · 6 × 800m at hard effort (5K race pace), 90 sec jog · 10 min easy · 5 min walk.",
+        desc_easy:"5 min walk · 10 min easy · 4 × 800m, 2 min jog · 10 min easy · 5 min walk.",
+        desc_hard:"5 min walk · 10 min easy · 8 × 800m, 90 sec jog · 10 min easy · 5 min walk." },
+      { day:"Wednesday", name:"Threshold Run",    pace:"tempo", dur:"~55 mins",
+        desc:"5 min walk · 10 min easy · 25 min continuous tempo · 10 min easy · 5 min walk.",
+        desc_easy:"5 min walk · 10 min easy · 20 min tempo · 10 min easy · 5 min walk.",
+        desc_hard:"5 min walk · 10 min easy · 28 min tempo · 10 min easy · 5 min walk." },
+      { day:"Saturday",  name:"Long Moderate",    pace:"mod",   dur:"~55 mins",
+        desc:"5 min walk · 45 min at moderate pace · 5 min walk. Race-conditioning — hold moderate the whole way.",
+        desc_easy:"5 min walk · 38 min moderate · 5 min walk.",
+        desc_hard:"5 min walk · 48 min moderate · 5 min walk." }
+    ]
+  },
+  { week:10, theme:"PEAK INTENSITY", phase:3, focus:"Highest effort week · Fartlek",
+    sessions:[
+      { day:"Monday",    name:"30-min Threshold", pace:"tempo", dur:"~60 mins",
+        desc:"5 min walk · 10 min easy · 30 min continuous tempo · 10 min easy · 5 min walk. Your hardest training run.",
+        desc_easy:"5 min walk · 10 min easy · 24 min tempo · 10 min easy · 5 min walk.",
+        desc_hard:"5 min walk · 10 min easy · 33 min tempo · 10 min easy · 5 min walk." },
+      { day:"Wednesday", name:"Fartlek",          pace:"mix",   dur:"~45 mins",
+        desc:"5 min walk · 35 min fartlek — alternate 3 min hard / 2 min easy throughout · 5 min walk.",
+        desc_easy:"5 min walk · 28 min fartlek (2 min hard / 2 min easy) · 5 min walk.",
+        desc_hard:"5 min walk · 38 min fartlek (3 min hard / 1.5 min easy) · 5 min walk." },
+      { day:"Saturday",  name:"Long Run",         pace:"easy",  dur:"~65 mins",
+        desc:"5 min walk · 55 min easy · 5 min walk. Keep it easy — the hard work is done this week.",
+        desc_easy:"5 min walk · 45 min easy · 5 min walk.",
+        desc_hard:"5 min walk · 55 min easy · 5 min walk." }
+    ]
+  },
+  { week:11, theme:"TAPER", phase:3, focus:"Volume drops · Legs stay sharp",
+    sessions:[
+      { day:"Monday",    name:"Moderate Run",      pace:"mod",   dur:"~35 mins",
+        desc:"5 min walk · 25 min moderate · 5 min walk. Volume drops significantly — legs stay sharp.",
+        desc_easy:"5 min walk · 20 min moderate · 5 min walk.",
+        desc_hard:"5 min walk · 28 min moderate · 5 min walk." },
+      { day:"Wednesday", name:"Tempo Sharpener",  pace:"tempo", dur:"~42 mins",
+        desc:"5 min walk · 10 min easy · 15 min tempo · 10 min easy · 5 min walk. Short, sharp, no heroics.",
+        desc_easy:"5 min walk · 10 min easy · 12 min tempo · 10 min easy · 5 min walk.",
+        desc_hard:"5 min walk · 10 min easy · 18 min tempo · 10 min easy · 5 min walk." },
+      { day:"Saturday",  name:"Easy Shakeout",    pace:"easy",  dur:"~35 mins",
+        desc:"5 min walk · 25 min easy · 5 min walk. Final run before race week — keep it gentle.",
+        desc_easy:"5 min walk · 20 min easy · 5 min walk.",
+        desc_hard:"5 min walk · 28 min easy · 5 min walk." }
+    ]
+  },
+  { week:12, theme:"RACE WEEK 🏆", phase:3, focus:"Light tune-up · 5K PB attempt",
+    sessions:[
+      { day:"Monday",    name:"Easy Activation",  pace:"mix",   dur:"~32 mins",
+        desc:"5 min walk · 20 min easy · 4 × 30 sec race-pace strides, 90 sec walk · 5 min walk. Wake the legs up.",
+        desc_easy:"5 min walk · 18 min easy · 3 × 30 sec strides · 5 min walk.",
+        desc_hard:"5 min walk · 20 min easy · 5 × 30 sec strides · 5 min walk." },
+      { day:"Wednesday", name:"Light Tune-up",    pace:"mix",   dur:"~25 mins",
+        desc:"5 min walk · 15 min easy · 3 × 1 min at race pace, 2 min walk · 5 min walk. Short and sharp.",
+        desc_easy:"5 min walk · 12 min easy · 2 × 1 min race pace, 2 min walk · 5 min walk.",
+        desc_hard:"5 min walk · 15 min easy · 4 × 1 min race pace, 2 min walk · 5 min walk." },
+      { day:"Saturday",  name:"5K Time Trial 🏆", pace:"race",  dur:"~45 mins",
+        desc:"10 min easy warm-up · 5K absolutely flat out · This is what 12 weeks has been building to — beat Week 4.",
+        desc_easy:"10 min easy warm-up · Strong 5K effort · Start controlled, build over the second half.",
+        desc_hard:"10 min easy warm-up · 5K full race effort — go for the PB from the gun." }
+    ]
+  }
+];
+
+const CHECKLIST = [
+  "Shoes laced & comfortable",
+  "Ankle mobility — 10 circles each direction",
+  "5–10 min brisk walk warm-up planned",
+  "Hydrated — at least 500ml before heading out",
+  "Route checked & phone charged"
+];
+
+// ============================================================
+// STORAGE
+// ============================================================
+const S = {
+  get: k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch { return null; } },
+  set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
+  runs: () => S.get('runs') || [],
+  saveRuns: r => S.set('runs', r),
+  completed: () => S.get('completed') || [],
+  saveCompleted: c => S.set('completed', c),
+  weekRatings: () => S.get('weekRatings') || {},
+  saveRating: (w, r) => { const obj = S.weekRatings(); obj[w] = r; S.set('weekRatings', obj); }
+};
+
+// ============================================================
+// ADAPTIVE DIFFICULTY
+// ============================================================
+function getWeekDiff(weekNum) {
+  if (weekNum <= 1) return 'standard';
+  const ratings = S.weekRatings();
+  const prev = ratings[weekNum - 1];
+  if (prev === 'too_easy') return 'hard';
+  if (prev === 'too_hard') return 'easy';
+  return 'standard';
+}
+
+function getSessionDesc(s, diff) {
+  if (diff === 'easy' && s.desc_easy) return s.desc_easy;
+  if (diff === 'hard' && s.desc_hard) return s.desc_hard;
+  return s.desc;
+}
+
+// ============================================================
+// NAV
+// ============================================================
+function switchScreen(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'home') renderHome();
+  if (id === 'program') renderProgram();
+  if (id === 'stats') renderStats();
+  if (id === 'calc') renderCalcTargets();
+}
+
+// ============================================================
+// RENDER HOME
+// ============================================================
+function renderHome() {
+  renderPaceZonesCard();
+  const runs = S.runs();
+  document.getElementById('stat-runs').textContent = runs.length;
+  const km = runs.reduce((s, r) => s + (r.dist || 0), 0);
+  document.getElementById('stat-km').textContent = km.toFixed(1);
+
+  const completed = S.completed();
+  const sessTotal = completed.length;
+  const currentWeek = Math.min(12, Math.floor(sessTotal / 3) + 1);
+  document.getElementById('stat-week').textContent = 'W' + currentWeek;
+
+  // Progress
+  const pct = Math.min(100, (sessTotal / 36) * 100);
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-week-label').textContent = `Week ${currentWeek} of 12`;
+  const phaseNames = ['Phase 1 — Base', 'Phase 2 — Build', 'Phase 3 — Race Ready'];
+  const phaseIdx = currentWeek <= 4 ? 0 : currentWeek <= 8 ? 1 : 2;
+  document.getElementById('prog-phase-name').textContent = phaseNames[phaseIdx];
+  [1,2,3].forEach(p => document.getElementById('phase-' + p).classList.toggle('active', p === phaseIdx + 1));
+
+  // Greeting
+  const h = new Date().getHours();
+  document.getElementById('home-greeting').textContent = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+
+  // Last run
+  const el = document.getElementById('last-run-content');
+  if (!runs.length) { el.innerHTML = `<div class="empty"><div class="empty-icon">👟</div><div class="empty-text">No runs logged yet.<br>Hit Log to record your first session.</div></div>`; return; }
+  const r = runs[0];
+  const d = new Date(r.date + 'T12:00:00');
+  const rpeColor = r.rpe >= 8 ? 'var(--red)' : r.rpe >= 5 ? 'var(--orange)' : 'var(--green)';
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="text-align:center;min-width:40px"><div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--accent);line-height:1">${d.getDate()}</div><div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">${d.toLocaleString('default',{month:'short'}).toUpperCase()}</div></div>
+      <div style="width:1px;height:38px;background:var(--border)"></div>
+      <div style="flex:1">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;margin-bottom:2px">${r.dist} km · ${r.time}</div>
+        <div style="font-size:11px;color:var(--muted)">${r.type ? r.type.charAt(0).toUpperCase()+r.type.slice(1) : 'Run'}${r.hr?' · ❤️ '+r.hr+' bpm':''}${r.cal?' · 🔥 '+r.cal+' kcal':''}</div>
+        ${r.rpe ? `<span class="rpe-badge" style="background:rgba(0,0,0,0.3);border:1px solid ${rpeColor};color:${rpeColor}">RPE ${r.rpe}</span>` : ''}
+      </div>
+      <div><div class="run-pace-badge">${r.pace||'—'}</div><div class="run-pace-label">/km</div></div>
+    </div>`;
+}
+
+// ============================================================
+// RENDER PROGRAM
+// ============================================================
+let pendingWeekReview = null;
+
+function renderProgram() {
+  const completed = S.completed();
+  const ratings = S.weekRatings();
+  const container = document.getElementById('program-list');
+  container.innerHTML = '';
+
+  PROGRAM.forEach(week => {
+    const diff = getWeekDiff(week.week);
+    const doneKeys = week.sessions.map((_,i) => `${week.week}-${i}`).filter(k => completed.includes(k));
+    const allDone = doneKeys.length === week.sessions.length;
+    const ratingVal = ratings[week.week];
+
+    const hdr = document.createElement('div');
+    hdr.className = 'week-header-bar';
+    let ratingChip = '';
+    if (ratingVal) {
+      const map = { too_easy: ['rating-easy','Too Easy'], about_right: ['rating-right','On Track'], too_hard: ['rating-hard','Tough'] };
+      const [cls, lbl] = map[ratingVal];
+      ratingChip = `<span class="week-rating-chip ${cls}">${lbl}</span>`;
+    }
+    let adaptTag = '';
+    if (diff === 'easy') adaptTag = `<span class="session-adapt-tag adapt-easier">↓ Adjusted Easier</span>`;
+    if (diff === 'hard') adaptTag = `<span class="session-adapt-tag adapt-harder">↑ Adjusted Harder</span>`;
+
+    hdr.innerHTML = `
+      <span class="week-header-num">W${week.week}</span>
+      <span class="week-header-theme">${week.theme}</span>
+      <span class="week-header-focus">${week.focus}</span>
+      ${ratingChip}`;
+    container.appendChild(hdr);
+
+    if (adaptTag && diff !== 'standard') {
+      const at = document.createElement('div');
+      at.style.cssText = 'padding:0 16px 6px';
+      at.innerHTML = adaptTag;
+      container.appendChild(at);
+    }
+
+    week.sessions.forEach((s, si) => {
+      const key = `${week.week}-${si}`;
+      const isDone = completed.includes(key);
+      const card = document.createElement('div');
+      card.className = 'session-card' + (isDone ? ' completed' : '');
+      const paceClass = `pace-${s.pace}`;
+      card.innerHTML = `
+        <div class="session-check">${isDone ? '✓' : ''}</div>
+        <div class="session-info">
+          <div class="session-day-label">${s.day}</div>
+          <div class="session-name">${s.name}</div>
+          <div class="session-desc">${getSessionDesc(s, diff)}</div>
+          <div style="font-size:11px;margin-top:6px;letter-spacing:0.5px">${sessionPaceNote(s.pace)}</div>
+          <div><span class="pace-tag ${paceClass}">${paceLabel(s.pace)}</span></div>
+          <div class="session-dur">${s.dur}</div>
+          ${!isDone ? `<button class="start-btn" data-week="${week.week}" data-idx="${si}">▶ Start Session</button>` : ''}
+        </div>`;
+      card.querySelector('.session-check').addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleComplete(key, card, week.week);
+      });
+      const startBtn = card.querySelector('.start-btn');
+      if (startBtn) startBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openChecklist(s.name);
+      });
+      container.appendChild(card);
+    });
+
+    if (allDone && !ratingVal) {
+      const reviewBtn = document.createElement('button');
+      reviewBtn.className = 'btn-secondary';
+      reviewBtn.style.cssText = 'margin:4px 16px 4px;width:calc(100% - 32px)';
+      reviewBtn.textContent = `Rate Week ${week.week} →`;
+      reviewBtn.onclick = () => openWeekReview(week.week);
+      container.appendChild(reviewBtn);
+    }
+
+    const div = document.createElement('div');
+    div.className = 'divider';
+    div.style.margin = '14px 16px 4px';
+    container.appendChild(div);
+  });
+}
+
+function sessionPaceNote(pace) {
+  const z = calcPaceZones(getBenchmark5KSecs());
+  const map = {
+    easy:  `<span style="color:var(--accent)">→</span> Easy: ${fmtPace(z.easy[0])}–${fmtPace(z.easy[1])}/km`,
+    mod:   `<span style="color:var(--orange)">→</span> Moderate: ${fmtPace(z.mod[0])}–${fmtPace(z.mod[1])}/km`,
+    tempo: `<span style="color:var(--red)">→</span> Tempo: ${fmtPace(z.tempo[0])}–${fmtPace(z.tempo[1])}/km`,
+    mix:   `<span style="color:var(--purple)">→</span> Easy: ${fmtPace(z.easy[0])}–${fmtPace(z.easy[1])}/km · Tempo: ${fmtPace(z.tempo[0])}–${fmtPace(z.tempo[1])}/km`,
+    race:  `<span style="color:var(--green)">→</span> Target: ${fmtPace(z.race)}/km`
+  };
+  return map[pace] || '';
+}
+
+function paceLabel(p) {
+  const z = calcPaceZones(getBenchmark5KSecs());
+  const map = {
+    easy:  `Easy — ${fmtPace(z.easy[0])}–${fmtPace(z.easy[1])}/km`,
+    mod:   `Moderate — ${fmtPace(z.mod[0])}–${fmtPace(z.mod[1])}/km`,
+    tempo: `Tempo — ${fmtPace(z.tempo[0])}–${fmtPace(z.tempo[1])}/km`,
+    mix:   'Mixed efforts',
+    race:  'Race effort — go for it'
+  };
+  return map[p] || p;
+}
+
+function toggleComplete(key, card, weekNum) {
+  const completed = S.completed();
+  const idx = completed.indexOf(key);
+  if (idx > -1) {
+    completed.splice(idx, 1);
+    card.classList.remove('completed');
+    card.querySelector('.session-check').textContent = '';
+  } else {
+    completed.push(key);
+    card.classList.add('completed');
+    card.querySelector('.session-check').textContent = '✓';
+    showToast('Session complete! 💪');
+    const weekKeys = PROGRAM.find(w => w.week === weekNum).sessions.map((_,i) => `${weekNum}-${i}`);
+    const allDone = weekKeys.every(k => completed.includes(k));
+    if (allDone && !S.weekRatings()[weekNum]) {
+      setTimeout(() => openWeekReview(weekNum), 800);
+    }
+  }
+  S.saveCompleted(completed);
+  renderHome();
+}
+
+// ============================================================
+// CHECKLIST MODAL
+// ============================================================
+function openChecklist(sessionName) {
+  document.getElementById('checklist-session-name').textContent = sessionName + ' — tick everything off';
+  const container = document.getElementById('checklist-items');
+  container.innerHTML = '';
+  CHECKLIST.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'checklist-item';
+    div.innerHTML = `<div class="check-box" id="cb-${i}"></div><div class="check-text" id="ct-${i}">${item}</div>`;
+    div.addEventListener('click', () => {
+      const box = document.getElementById('cb-' + i);
+      const txt = document.getElementById('ct-' + i);
+      box.classList.toggle('checked');
+      txt.classList.toggle('checked');
+      box.textContent = box.classList.contains('checked') ? '✓' : '';
+    });
+    container.appendChild(div);
+  });
+  document.getElementById('checklist-modal').classList.add('open');
+}
+
+function closeChecklist(e) { if (e.target === e.currentTarget) closeChecklistDirect(); }
+function closeChecklistDirect() { document.getElementById('checklist-modal').classList.remove('open'); }
+function startSession() { closeChecklistDirect(); showToast('Go get it, Darragh! 🔥'); }
+
+// ============================================================
+// WEEKLY REVIEW MODAL
+// ============================================================
+function openWeekReview(weekNum) {
+  pendingWeekReview = weekNum;
+  document.getElementById('review-week-num').textContent = weekNum;
+  document.getElementById('review-modal').classList.add('open');
+}
+
+function closeReview(e) { if (e.target === e.currentTarget) document.getElementById('review-modal').classList.remove('open'); }
+
+function saveWeekRating(rating) {
+  if (!pendingWeekReview) return;
+  S.saveRating(pendingWeekReview, rating);
+  document.getElementById('review-modal').classList.remove('open');
+  const labels = { too_easy: 'Next week stepped up!', about_right: 'On track — keep going!', too_hard: 'Next week eased off a bit.' };
+  showToast(labels[rating]);
+  renderProgram();
+  renderHome();
+  pendingWeekReview = null;
+}
+
+// ============================================================
+// LOG A RUN
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
+  ['log-dist','log-time'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      document.getElementById('log-pace').value = calcPaceStr(document.getElementById('log-dist').value, document.getElementById('log-time').value);
+    });
+  });
+  const rpe = document.getElementById('log-rpe');
+  rpe.addEventListener('input', () => document.getElementById('rpe-display').textContent = rpe.value);
+  renderHome();
+  renderProgram();
+  renderCalcTargets();
+  setupPWA();
+});
+
+function calcPaceStr(dist, timeStr) {
+  if (!dist || !timeStr) return '';
+  const parts = timeStr.split(':');
+  if (parts.length < 2) return '';
+  let secs = 0;
+  if (parts.length === 3) secs = parseInt(parts[0])*3600 + parseInt(parts[1])*60 + parseInt(parts[2]);
+  else secs = parseInt(parts[0])*60 + parseInt(parts[1]);
+  if (!secs || !parseFloat(dist)) return '';
+  const ps = secs / parseFloat(dist);
+  return `${Math.floor(ps/60)}:${Math.round(ps%60).toString().padStart(2,'0')}`;
+}
+
+function saveRun() {
+  const date = document.getElementById('log-date').value;
+  const dist = document.getElementById('log-dist').value;
+  const time = document.getElementById('log-time').value;
+  if (!date || !dist || !time) { showToast('Fill in date, distance & time'); return; }
+  const run = {
+    id: Date.now(), date, dist: parseFloat(dist), time,
+    pace: calcPaceStr(dist, time),
+    hr: document.getElementById('log-hr').value ? parseInt(document.getElementById('log-hr').value) : null,
+    cal: document.getElementById('log-cal').value ? parseInt(document.getElementById('log-cal').value) : null,
+    type: document.getElementById('log-type').value,
+    rpe: parseInt(document.getElementById('log-rpe').value),
+    notes: document.getElementById('log-notes').value
+  };
+  const runs = S.runs();
+  runs.unshift(run);
+  S.saveRuns(runs);
+  clearForm();
+  showToast('Run saved! 🏃');
+  renderHome();
+}
+
+function clearForm() {
+  ['log-dist','log-time','log-pace','log-hr','log-cal','log-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('log-type').value = '';
+  document.getElementById('log-rpe').value = '5';
+  document.getElementById('rpe-display').textContent = '5';
+  document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
+}
+
+// ============================================================
+// STATS SCREEN
+// ============================================================
+function renderStats() {
+  const runs = S.runs();
+  const now = new Date();
+  const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay() + 1); weekStart.setHours(0,0,0,0);
+  const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 7);
+  const thisWeek = runs.filter(r => { const d = new Date(r.date + 'T12:00:00'); return d >= weekStart && d < weekEnd; });
+
+  document.getElementById('ws-runs').textContent = thisWeek.length;
+  const cw = Math.min(12, Math.floor(S.completed().length / 3) + 1);
+  document.getElementById('ws-planned').textContent = PROGRAM[cw-1]?.sessions.length || 3;
+  document.getElementById('ws-km').textContent = thisWeek.reduce((s,r) => s+(r.dist||0), 0).toFixed(1);
+  const rpes = thisWeek.filter(r => r.rpe).map(r => r.rpe);
+  document.getElementById('ws-rpe').textContent = rpes.length ? (rpes.reduce((a,b)=>a+b,0)/rpes.length).toFixed(1) : '—';
+
+  const totalSecs = thisWeek.reduce((s,r) => {
+    if (!r.time) return s;
+    const p = r.time.split(':');
+    return s + (p.length===2 ? parseInt(p[0])*60+parseInt(p[1]) : parseInt(p[0])*3600+parseInt(p[1])*60+parseInt(p[2]));
+  }, 0);
+  const totalKm = thisWeek.reduce((s,r) => s+(r.dist||0), 0);
+  if (totalKm > 0) {
+    const ps = totalSecs / totalKm;
+    document.getElementById('ws-pace').textContent = `${Math.floor(ps/60)}:${Math.round(ps%60).toString().padStart(2,'0')}`;
+  } else { document.getElementById('ws-pace').textContent = '—'; }
+
+  document.getElementById('at-runs').textContent = runs.length;
+  document.getElementById('at-km').textContent = runs.reduce((s,r)=>s+(r.dist||0),0).toFixed(1);
+  const allRpes = runs.filter(r=>r.rpe).map(r=>r.rpe);
+  document.getElementById('at-rpe').textContent = allRpes.length ? (allRpes.reduce((a,b)=>a+b,0)/allRpes.length).toFixed(1) : '—';
+  document.getElementById('at-sessions').textContent = S.completed().length;
+
+  const hist = document.getElementById('history-list-stats');
+  hist.innerHTML = '<div style="padding:0 16px 8px;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-top:8px">Run Log</div>';
+  if (!runs.length) { hist.innerHTML += `<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No runs yet.</div></div>`; return; }
+  runs.slice(0, 20).forEach(r => {
+    const d = new Date(r.date + 'T12:00:00');
+    const rpeColor = r.rpe >= 8 ? 'var(--red)' : r.rpe >= 5 ? 'var(--orange)' : 'var(--green)';
+    const item = document.createElement('div');
+    item.className = 'run-item';
+    item.innerHTML = `
+      <div class="run-date-box"><div class="run-date-day">${d.getDate()}</div><div class="run-date-month">${d.toLocaleString('default',{month:'short'}).toUpperCase()}</div></div>
+      <div class="run-divider"></div>
+      <div class="run-stats">
+        <div class="run-main">${r.dist} km · ${r.time}</div>
+        <div class="run-sub">${r.type ? r.type.charAt(0).toUpperCase()+r.type.slice(1) : 'Run'}${r.hr?' · ❤️ '+r.hr:''}${r.cal?' · 🔥 '+r.cal+' kcal':''}</div>
+        ${r.rpe?`<span class="rpe-badge" style="background:rgba(0,0,0,0.3);border:1px solid ${rpeColor};color:${rpeColor}">RPE ${r.rpe}</span>`:''}
+        ${r.notes?`<div class="run-sub" style="margin-top:3px;font-style:italic;font-size:11px">"${r.notes.slice(0,70)}${r.notes.length>70?'…':''}"</div>`:''}
+      </div>
+      <div><div class="run-pace-badge">${r.pace||'—'}</div><div class="run-pace-label">/km</div></div>`;
+    hist.appendChild(item);
+  });
+  if (runs.length) {
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'btn-secondary';
+    clearBtn.style.cssText = 'margin:8px 16px;width:calc(100% - 32px)';
+    clearBtn.textContent = 'Clear all runs';
+    clearBtn.onclick = () => { if (confirm('Delete all logged runs?')) { S.saveRuns([]); renderStats(); renderHome(); } };
+    hist.appendChild(clearBtn);
+  }
+}
+
+// ============================================================
+// PACE CALCULATOR
+// ============================================================
+function switchCalcTab(tab, btn) {
+  ['pace','time','dist'].forEach(t => {
+    document.getElementById('calc-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.calc-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function parseTimeToSecs(s) {
+  const p = s.trim().split(':');
+  if (p.length === 2) return parseInt(p[0])*60 + parseInt(p[1]);
+  if (p.length === 3) return parseInt(p[0])*3600 + parseInt(p[1])*60 + parseInt(p[2]);
+  return null;
+}
+
+function secsToTime(s) {
+  if (s >= 3600) return `${Math.floor(s/3600)}:${Math.floor((s%3600)/60).toString().padStart(2,'0')}:${Math.round(s%60).toString().padStart(2,'0')}`;
+  return `${Math.floor(s/60)}:${Math.round(s%60).toString().padStart(2,'0')}`;
+}
+
+function calcPaceResult() {
+  const dist = parseFloat(document.getElementById('c-dist').value);
+  const secs = parseTimeToSecs(document.getElementById('c-time').value);
+  const res = document.getElementById('r-pace');
+  if (!dist || !secs) { res.style.display = 'none'; return; }
+  const ps = secs / dist;
+  document.getElementById('rv-pace').textContent = `${Math.floor(ps/60)}:${Math.round(ps%60).toString().padStart(2,'0')}`;
+  res.style.display = 'block';
+}
+
+function calcTimeResult() {
+  const dist = parseFloat(document.getElementById('c-dist2').value);
+  const paceSecs = parseTimeToSecs(document.getElementById('c-pace2').value);
+  const res = document.getElementById('r-time');
+  if (!dist || !paceSecs) { res.style.display = 'none'; return; }
+  document.getElementById('rv-time').textContent = secsToTime(Math.round(dist * paceSecs));
+  res.style.display = 'block';
+}
+
+function calcDistResult() {
+  const secs = parseTimeToSecs(document.getElementById('c-time3').value);
+  const paceSecs = parseTimeToSecs(document.getElementById('c-pace3').value);
+  const res = document.getElementById('r-dist');
+  if (!secs || !paceSecs) { res.style.display = 'none'; return; }
+  document.getElementById('rv-dist').textContent = (secs / paceSecs).toFixed(2);
+  res.style.display = 'block';
+}
+
+// ============================================================
+// DYNAMIC PACE ZONES
+// ============================================================
+function getBenchmark5KSecs() {
+  const runs = S.runs();
+  const races = runs.filter(r => r.type === 'race' && r.dist >= 4.8 && r.dist <= 5.2 && r.time);
+  let best = Infinity;
+  races.forEach(r => {
+    const p = r.time.split(':');
+    const s = p.length === 3
+      ? parseInt(p[0])*3600 + parseInt(p[1])*60 + parseInt(p[2])
+      : parseInt(p[0])*60 + parseInt(p[1]);
+    if (s > 0 && s < best) best = s;
+  });
+  return best === Infinity ? 1800 : best;
+}
+
+function calcPaceZones(fiveKSecs) {
+  const rp = fiveKSecs / 5;
+  return {
+    easy:  [Math.round(rp * 1.208), Math.round(rp * 1.333)],
+    mod:   [Math.round(rp * 1.042), Math.round(rp * 1.125)],
+    tempo: [Math.round(rp * 0.917), Math.round(rp * 1.000)],
+    race:  Math.round(rp)
+  };
+}
+
+function fmtPace(s) {
+  return `${Math.floor(s/60)}:${Math.round(s%60).toString().padStart(2,'0')}`;
+}
+
+function renderPaceZonesCard() {
+  const el = document.getElementById('pace-zones-card');
+  if (!el) return;
+  const fiveK = getBenchmark5KSecs();
+  const z = calcPaceZones(fiveK);
+  const isDefault = fiveK === 1800;
+  const benchLabel = isDefault
+    ? '~30:00 (log a 5K race to update)'
+    : `${fmtPace(fiveK)} — your best 5K`;
+  el.innerHTML = `
+    <div class="card-label">Pace Zones — 5K: ${benchLabel}</div>
+    <div class="pace-zone-row"><span style="color:var(--accent);font-weight:500">🟡 Easy</span><span style="color:var(--muted)">${fmtPace(z.easy[0])} – ${fmtPace(z.easy[1])} /km</span></div>
+    <div class="pace-zone-row"><span style="color:var(--orange);font-weight:500">🟠 Moderate</span><span style="color:var(--muted)">${fmtPace(z.mod[0])} – ${fmtPace(z.mod[1])} /km</span></div>
+    <div class="pace-zone-row"><span style="color:var(--red);font-weight:500">🔴 Tempo</span><span style="color:var(--muted)">${fmtPace(z.tempo[0])} – ${fmtPace(z.tempo[1])} /km</span></div>
+    <div class="pace-zone-row"><span style="color:var(--green);font-weight:500">🟢 Race Effort</span><span style="color:var(--muted)">${fmtPace(z.race)} /km target</span></div>`;
+}
+
+function renderCalcTargets() {
+  const el = document.getElementById('calc-quick-targets');
+  if (!el) return;
+  const fiveK = getBenchmark5KSecs();
+  const isDefault = fiveK === 1800;
+  const benchLabel = isDefault ? '~30:00' : fmtPace(fiveK);
+  const targets = [
+    { label: '5K in 28:00', secs: 1680, km: 5 },
+    { label: '5K in 27:00', secs: 1620, km: 5 },
+    { label: '5K in 25:00', secs: 1500, km: 5 },
+    { label: '10K in 60:00', secs: 3600, km: 10 }
+  ];
+  const rows = targets.map(t => {
+    const pace = fmtPace(Math.round(t.secs / t.km));
+    const achieved = t.km === 5 && !isDefault && fiveK <= t.secs;
+    return `<div class="pace-zone-row"><span style="color:var(--muted)">${t.label}${achieved ? ' <span style="color:var(--green)">✓</span>' : ''}</span><span style="color:var(--accent);font-family:'Bebas Neue',sans-serif;font-size:17px">${pace}/km</span></div>`;
+  }).join('');
+  el.innerHTML = `<div class="card-label">Quick Targets — Your 5K: ${benchLabel}</div>${rows}`;
+}
+
+// ============================================================
+// PWA SETUP
+// ============================================================
+function setupPWA() {
+  const sz = 512;
+  const canvas = document.createElement('canvas');
+  canvas.width = sz; canvas.height = sz;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#080808';
+  ctx.fillRect(0, 0, sz, sz);
+  ctx.fillStyle = '#e8ff47';
+  ctx.fillRect(0, 0, sz, 28);
+  ctx.fillRect(0, 0, 28, sz);
+  ctx.fillStyle = '#e8ff47';
+  ctx.font = `bold ${Math.round(sz * 0.72)}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('R', sz / 2 + 14, sz / 2 + 14);
+  const icon512 = canvas.toDataURL('image/png');
+  const c2 = document.createElement('canvas');
+  c2.width = 192; c2.height = 192;
+  c2.getContext('2d').drawImage(canvas, 0, 0, 192, 192);
+  const icon192 = c2.toDataURL('image/png');
+
+  const al = document.createElement('link');
+  al.rel = 'apple-touch-icon';
+  al.href = icon192;
+  document.head.appendChild(al);
+
+  const manifest = JSON.stringify({
+    name: 'Run Tracker — Darragh',
+    short_name: 'Runs',
+    start_url: window.location.href,
+    display: 'standalone',
+    background_color: '#080808',
+    theme_color: '#080808',
+    orientation: 'portrait-primary',
+    icons: [
+      { src: icon192, sizes: '192x192', type: 'image/png' },
+      { src: icon512, sizes: '512x512', type: 'image/png' }
+    ]
+  });
+  const ml = document.createElement('link');
+  ml.rel = 'manifest';
+  ml.href = URL.createObjectURL(new Blob([manifest], { type: 'application/manifest+json' }));
+  document.head.appendChild(ml);
+
+  if (!S.get('installDismissed')) {
+    const card = document.getElementById('install-card');
+    if (card) card.style.display = 'block';
+  }
+}
+
+function dismissInstall() {
+  S.set('installDismissed', true);
+  const card = document.getElementById('install-card');
+  if (card) card.style.display = 'none';
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+</script>
+</body>
+</html>
