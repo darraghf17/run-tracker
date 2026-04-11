@@ -8,19 +8,21 @@
 <meta name="apple-mobile-web-app-title" content="Run Tracker">
 <meta name="theme-color" content="#080808">
 <title>Run Tracker — Darragh</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800;9..144,900&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <style>
   :root {
-    --bg: #080808; --card: #111; --card2: #181818; --border: #222;
-    --accent: #e8ff47; --orange: #ff6b35; --red: #ff4757; --purple: #a78bfa;
-    --text: #f0f0f0; --muted: #666; --muted2: #444; --green: #2ecc71;
+    --bg: #f0e6d5; --card: #fdf8f0; --card2: #ede4d6; --border: #d4c8b6;
+    --accent: #e8a028; --orange: #d45f52; --red: #c04040; --purple: #7b6cba;
+    --text: #1e1a16; --muted: #7a6e65; --muted2: #b0a396; --green: #3cb87a;
+    --teal: #5aad8e; --blue: #6495c0; --coral: #d45f52; --gold: #e8a028;
   }
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; font-weight:300; min-height:100vh; overscroll-behavior:none; }
+  html,body { background:var(--bg); color:var(--text); font-family:'Nunito',sans-serif; font-weight:300; min-height:100vh; overscroll-behavior:none; }
 
   /* NAV */
-  .nav { position:fixed; bottom:0; left:0; right:0; background:rgba(8,8,8,0.96); backdrop-filter:blur(20px); border-top:1px solid var(--border); display:flex; z-index:100; padding-bottom:env(safe-area-inset-bottom); }
-  .nav-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 0; background:none; border:none; color:var(--muted); font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; transition:color 0.2s; }
+  .nav { position:fixed; bottom:0; left:0; right:0; background:rgba(253,248,240,0.97); backdrop-filter:blur(20px); border-top:1px solid var(--border); display:flex; z-index:100; padding-bottom:env(safe-area-inset-bottom); }
+  .nav-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 0; background:none; border:none; color:var(--muted); font-family:'Nunito',sans-serif; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; transition:color 0.2s; }
   .nav-btn.active { color:var(--accent); }
   .nav-btn svg { width:20px; height:20px; }
 
@@ -31,24 +33,24 @@
   /* HEADER */
   .header { padding:52px 20px 16px; }
   .header-label { font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
-  .header-title { font-family:'Bebas Neue',sans-serif; font-size:40px; letter-spacing:2px; line-height:1; }
+  .header-title { font-family:'Fraunces',serif; font-size:38px; font-weight:900; letter-spacing:-0.5px; line-height:1.05; }
   .header-title span { color:var(--accent); }
 
   /* CARDS */
-  .card { background:var(--card); border:1px solid var(--border); margin:0 16px 12px; padding:18px; }
-  .card-label { font-size:10px; letter-spacing:2.5px; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+  .card { background:var(--card); border:1px solid var(--border); margin:0 16px 12px; padding:18px; border-radius:12px; }
+  .card-label { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:12px; font-weight:600; }
 
   /* STATS ROW */
-  .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--border); margin:0 16px 12px; }
-  .stat-box { background:var(--card); padding:14px 10px; text-align:center; }
-  .stat-val { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:1px; color:var(--accent); line-height:1; }
+  .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:0 16px 12px; background:transparent; }
+  .stat-box { background:var(--card); border:1px solid var(--border); padding:14px 10px; text-align:center; border-radius:10px; }
+  .stat-val { font-family:'Fraunces',serif; font-size:26px; font-weight:800; letter-spacing:-0.5px; color:var(--accent); line-height:1; }
   .stat-label { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-top:3px; }
 
   /* PROGRESS BAR (12 weeks) */
   .prog-container { margin:0 16px 12px; }
   .prog-label-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
   .prog-phase-label { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); }
-  .prog-week-label { font-family:'Bebas Neue',sans-serif; font-size:18px; color:var(--accent); letter-spacing:1px; }
+  .prog-week-label { font-family:'Fraunces',serif; font-size:18px; font-weight:800; color:var(--accent); letter-spacing:-0.5px; }
   .prog-track { height:4px; background:var(--border); border-radius:2px; overflow:hidden; margin-bottom:6px; }
   .prog-fill { height:100%; background:var(--accent); transition:width 0.8s ease; border-radius:2px; }
   .prog-phases { display:flex; gap:1px; }
@@ -56,37 +58,37 @@
   .prog-phase.active { color:var(--accent); }
 
   /* SESSION CARDS */
-  .session-card { background:var(--card); border:1px solid var(--border); margin:0 16px 8px; padding:14px; display:flex; align-items:flex-start; gap:12px; }
-  .session-card.completed { border-color:rgba(232,255,71,0.35); }
+  .session-card { background:var(--card); border:1px solid var(--border); margin:0 16px 8px; padding:14px; display:flex; align-items:flex-start; gap:12px; border-radius:10px; }
+  .session-card.completed { border-color:rgba(232,160,40,0.4); }
   .session-card.completed .session-check { background:var(--accent); color:#000; }
-  .session-check { width:30px; height:30px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; transition:all 0.2s; color:var(--muted); }
+  .session-check { width:30px; height:30px; border:2px solid var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; transition:all 0.2s; color:var(--muted); }
   .session-info { flex:1; }
   .session-day-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:3px; }
-  .session-name { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:1px; margin-bottom:3px; }
-  .session-desc { font-size:12px; color:#999; line-height:1.55; }
-  .pace-tag { display:inline-block; font-size:9px; padding:3px 7px; letter-spacing:1px; text-transform:uppercase; font-weight:500; margin-top:7px; }
-  .pace-easy { background:rgba(232,255,71,0.1); color:var(--accent); }
-  .pace-mod  { background:rgba(255,107,53,0.1); color:var(--orange); }
-  .pace-tempo{ background:rgba(255,71,87,0.1);  color:var(--red); }
-  .pace-mix  { background:rgba(167,139,250,0.1); color:var(--purple); }
-  .pace-race { background:rgba(46,204,113,0.12); color:var(--green); }
+  .session-name { font-family:'Fraunces',serif; font-size:17px; font-weight:800; letter-spacing:-0.5px; margin-bottom:3px; }
+  .session-desc { font-size:12px; color:var(--muted); line-height:1.55; }
+  .pace-tag { display:inline-block; font-size:9px; padding:3px 9px; letter-spacing:1px; text-transform:uppercase; font-weight:600; margin-top:7px; border-radius:20px; }
+  .pace-easy { background:rgba(232,160,40,0.12); color:var(--accent); }
+  .pace-mod  { background:rgba(212,95,82,0.15); color:var(--orange); }
+  .pace-tempo{ background:rgba(192,64,64,0.15);  color:var(--red); }
+  .pace-mix  { background:rgba(123,108,186,0.15); color:var(--purple); }
+  .pace-race { background:rgba(60,184,122,0.15); color:var(--green); }
   .session-dur { font-size:10px; color:var(--muted); margin-top:5px; letter-spacing:0.5px; }
-  .session-adapt-tag { font-size:9px; padding:2px 6px; margin-top:5px; display:inline-block; border-radius:2px; }
-  .adapt-easier { background:rgba(46,204,113,0.12); color:var(--green); }
-  .adapt-harder { background:rgba(255,71,87,0.1); color:var(--red); }
+  .session-adapt-tag { font-size:9px; padding:3px 8px; margin-top:5px; display:inline-block; border-radius:20px; font-weight:600; }
+  .adapt-easier { background:rgba(60,184,122,0.15); color:var(--green); }
+  .adapt-harder { background:rgba(192,64,64,0.15); color:var(--red); }
 
-  .start-btn { display:block; margin-top:10px; padding:7px 12px; background:rgba(232,255,71,0.08); border:1px solid rgba(232,255,71,0.2); color:var(--accent); font-size:10px; letter-spacing:2px; text-transform:uppercase; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.2s; }
-  .start-btn:active { background:rgba(232,255,71,0.18); }
+  .start-btn { display:inline-block; margin-top:10px; padding:8px 14px; background:var(--accent); border:none; color:#fff; font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; cursor:pointer; font-family:'Nunito',sans-serif; transition:all 0.2s; border-radius:20px; }
+  .start-btn:active { opacity:0.85; }
 
   /* WEEK HEADER */
   .week-header-bar { display:flex; align-items:center; gap:10px; padding:18px 16px 8px; }
-  .week-header-num { font-family:'Bebas Neue',sans-serif; font-size:12px; letter-spacing:3px; color:var(--muted); }
-  .week-header-theme { font-family:'Bebas Neue',sans-serif; font-size:19px; letter-spacing:2px; }
+  .week-header-num { font-family:'Fraunces',serif; font-size:12px; letter-spacing:3px; color:var(--muted); }
+  .week-header-theme { font-family:'Fraunces',serif; font-size:19px; letter-spacing:2px; }
   .week-header-focus { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-left:auto; }
-  .week-rating-chip { font-size:9px; padding:3px 8px; border-radius:20px; letter-spacing:1px; text-transform:uppercase; margin-top:0; }
-  .rating-easy { background:rgba(46,204,113,0.15); color:var(--green); border:1px solid rgba(46,204,113,0.3); }
-  .rating-right { background:rgba(232,255,71,0.1); color:var(--accent); border:1px solid rgba(232,255,71,0.2); }
-  .rating-hard { background:rgba(255,71,87,0.1); color:var(--red); border:1px solid rgba(255,71,87,0.25); }
+  .week-rating-chip { font-size:9px; padding:4px 10px; border-radius:20px; letter-spacing:1px; text-transform:uppercase; margin-top:0; font-weight:600; }
+  .rating-easy { background:rgba(60,184,122,0.18); color:var(--green); border:1px solid rgba(60,184,122,0.35); }
+  .rating-right { background:rgba(232,160,40,0.12); color:var(--accent); border:1px solid rgba(232,160,40,0.25); }
+  .rating-hard { background:rgba(192,64,64,0.15); color:var(--red); border:1px solid rgba(192,64,64,0.3); }
 
   .divider { height:1px; background:var(--border); margin:8px 16px; }
 
@@ -94,10 +96,10 @@
   .form-group { margin-bottom:14px; }
   .form-label { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:7px; display:block; }
   .form-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-  input,select,textarea { width:100%; background:var(--card2); border:1px solid var(--border); color:var(--text); font-family:'DM Sans',sans-serif; font-size:16px; font-weight:300; padding:11px 13px; outline:none; transition:border-color 0.2s; -webkit-appearance:none; border-radius:0; }
+  input,select,textarea { width:100%; background:var(--card2); border:1px solid var(--border); color:var(--text); font-family:'Nunito',sans-serif; font-size:16px; font-weight:300; padding:11px 13px; outline:none; transition:border-color 0.2s; -webkit-appearance:none; border-radius:0; }
   input:focus,select:focus,textarea:focus { border-color:var(--accent); }
   textarea { resize:none; height:76px; font-size:14px; }
-  select option { background:#111; }
+  select option { background:var(--card); color:var(--text); }
 
   /* RPE SLIDER */
   .rpe-wrap { position:relative; }
@@ -105,25 +107,25 @@
   .rpe-slider::-webkit-slider-thumb { -webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:var(--accent); cursor:pointer; }
   .rpe-labels { display:flex; justify-content:space-between; margin-top:6px; }
   .rpe-label { font-size:9px; letter-spacing:1px; color:var(--muted); }
-  .rpe-val { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--accent); text-align:center; line-height:1; margin-bottom:4px; }
+  .rpe-val { font-family:'Fraunces',serif; font-size:28px; font-weight:800; color:var(--accent); text-align:center; line-height:1; margin-bottom:4px; }
 
-  .btn-primary { width:100%; background:var(--accent); color:#000; border:none; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:3px; padding:15px; cursor:pointer; transition:opacity 0.2s; }
+  .btn-primary { width:100%; background:var(--accent); color:#1e1a16; border:none; font-family:'Fraunces',serif; font-size:20px; font-weight:800; letter-spacing:1px; padding:15px; cursor:pointer; transition:opacity 0.2s; border-radius:4px; }
   .btn-primary:active { opacity:0.8; }
-  .btn-secondary { width:100%; background:transparent; color:var(--muted); border:1px solid var(--border); font-family:'DM Sans',sans-serif; font-size:13px; letter-spacing:1px; padding:11px; cursor:pointer; margin-top:8px; transition:all 0.2s; }
+  .btn-secondary { width:100%; background:transparent; color:var(--muted); border:1px solid var(--border); font-family:'Nunito',sans-serif; font-size:13px; font-weight:500; letter-spacing:0.5px; padding:11px; cursor:pointer; margin-top:8px; transition:all 0.2s; border-radius:4px; }
   .btn-secondary:hover { border-color:var(--muted); color:var(--text); }
 
   /* RUN HISTORY */
-  .run-item { background:var(--card); border:1px solid var(--border); margin:0 16px 8px; padding:14px; display:flex; align-items:center; gap:12px; }
+  .run-item { background:var(--card); border:1px solid var(--border); margin:0 16px 8px; padding:14px; display:flex; align-items:center; gap:12px; border-radius:6px; }
   .run-date-box { text-align:center; min-width:40px; }
-  .run-date-day { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:1px; line-height:1; color:var(--accent); }
+  .run-date-day { font-family:'Fraunces',serif; font-size:26px; font-weight:800; letter-spacing:-0.5px; line-height:1; color:var(--accent); }
   .run-date-month { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); }
   .run-divider { width:1px; height:38px; background:var(--border); }
   .run-stats { flex:1; }
-  .run-main { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; margin-bottom:2px; }
-  .run-sub { font-size:11px; color:var(--muted); letter-spacing:0.5px; }
-  .run-pace-badge { font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:1px; color:var(--accent); text-align:right; }
+  .run-main { font-family:'Fraunces',serif; font-size:20px; font-weight:800; letter-spacing:-0.5px; margin-bottom:2px; }
+  .run-sub { font-size:11px; color:var(--muted); letter-spacing:0.3px; }
+  .run-pace-badge { font-family:'Fraunces',serif; font-size:18px; font-weight:800; letter-spacing:-0.5px; color:var(--accent); text-align:right; }
   .run-pace-label { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); text-align:right; }
-  .rpe-badge { display:inline-block; font-size:10px; padding:2px 7px; border-radius:2px; margin-top:3px; font-weight:500; }
+  .rpe-badge { display:inline-block; font-size:10px; padding:2px 7px; border-radius:3px; margin-top:3px; font-weight:600; }
 
   /* PACE ZONES */
   .pace-zone-row { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid var(--border); font-size:13px; }
@@ -135,14 +137,14 @@
   .empty-text { font-size:14px; line-height:1.6; }
 
   /* TOAST */
-  .toast { position:fixed; bottom:96px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--accent); color:#000; font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:2px; padding:10px 22px; opacity:0; transition:all 0.3s; pointer-events:none; z-index:200; white-space:nowrap; }
+  .toast { position:fixed; bottom:96px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--accent); color:#000; font-family:'Fraunces',serif; font-size:16px; letter-spacing:2px; padding:10px 22px; opacity:0; transition:all 0.3s; pointer-events:none; z-index:200; white-space:nowrap; }
   .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
   /* MODAL */
-  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:300; display:none; align-items:flex-end; justify-content:center; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(30,26,22,0.7); z-index:300; display:none; align-items:flex-end; justify-content:center; }
   .modal-overlay.open { display:flex; }
-  .modal-box { background:var(--card); border-top:1px solid var(--border); width:100%; max-width:480px; padding:28px 20px 40px; max-height:88vh; overflow-y:auto; }
-  .modal-title { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:2px; margin-bottom:4px; }
+  .modal-box { background:var(--card); border-top:1px solid var(--border); border-radius:20px 20px 0 0; width:100%; max-width:480px; padding:28px 20px 40px; max-height:88vh; overflow-y:auto; }
+  .modal-title { font-family:'Fraunces',serif; font-size:28px; font-weight:900; letter-spacing:-0.5px; margin-bottom:4px; }
   .modal-sub { font-size:12px; color:var(--muted); margin-bottom:20px; letter-spacing:0.5px; }
   .checklist-item { display:flex; align-items:center; gap:12px; padding:13px 0; border-bottom:1px solid var(--border); cursor:pointer; }
   .checklist-item:last-of-type { border-bottom:none; }
@@ -153,22 +155,78 @@
 
   /* RATING BUTTONS */
   .rating-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:16px; }
-  .rating-btn { padding:14px 8px; border:1px solid var(--border); background:transparent; color:var(--text); font-family:'DM Sans',sans-serif; font-size:12px; letter-spacing:0.5px; cursor:pointer; transition:all 0.2s; line-height:1.4; text-align:center; }
+  .rating-btn { padding:14px 8px; border:1px solid var(--border); background:transparent; color:var(--text); font-family:'Nunito',sans-serif; font-size:12px; letter-spacing:0.5px; cursor:pointer; transition:all 0.2s; line-height:1.4; text-align:center; }
   .rating-btn:hover { border-color:var(--accent); color:var(--accent); }
 
   /* STATS SCREEN */
   .week-summary-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:0 16px 12px; }
-  .summary-box { background:var(--card); border:1px solid var(--border); padding:14px; }
-  .summary-val { font-family:'Bebas Neue',sans-serif; font-size:30px; color:var(--accent); letter-spacing:1px; line-height:1; }
+  .summary-box { background:var(--card); border:1px solid var(--border); padding:14px; border-radius:10px; }
+  .summary-val { font-family:'Fraunces',serif; font-size:30px; font-weight:800; color:var(--text); letter-spacing:-0.5px; line-height:1; }
   .summary-label { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-top:4px; }
 
+  /* COLOURFUL STAT BLOCKS */
+  .stat-teal  { background:var(--teal)  !important; border-color:var(--teal)  !important; }
+  .stat-blue  { background:var(--blue)  !important; border-color:var(--blue)  !important; }
+  .stat-coral { background:var(--coral) !important; border-color:var(--coral) !important; }
+  .stat-gold  { background:var(--gold)  !important; border-color:var(--gold)  !important; }
+  .stat-teal .stat-val,  .stat-teal .stat-label,
+  .stat-blue .stat-val,  .stat-blue .stat-label,
+  .stat-coral .stat-val, .stat-coral .stat-label,
+  .stat-gold .stat-val,  .stat-gold .stat-label  { color:#fff; }
+  .sum-teal  { background:var(--teal)  !important; border-color:var(--teal)  !important; }
+  .sum-blue  { background:var(--blue)  !important; border-color:var(--blue)  !important; }
+  .sum-coral { background:var(--coral) !important; border-color:var(--coral) !important; }
+  .sum-gold  { background:var(--gold)  !important; border-color:var(--gold)  !important; }
+  .sum-teal .summary-val,  .sum-teal .summary-label,
+  .sum-blue .summary-val,  .sum-blue .summary-label,
+  .sum-coral .summary-val, .sum-coral .summary-label,
+  .sum-gold .summary-val,  .sum-gold .summary-label  { color:#fff; }
+
   /* PACE CALC */
-  .calc-result { background:var(--card2); border:1px solid rgba(232,255,71,0.2); padding:18px; text-align:center; margin-top:16px; }
-  .calc-result-val { font-family:'Bebas Neue',sans-serif; font-size:48px; color:var(--accent); letter-spacing:2px; line-height:1; }
+  .calc-result { background:var(--card2); border:1px solid rgba(232,160,40,0.25); padding:18px; text-align:center; margin-top:16px; }
+  .calc-result-val { font-family:'Fraunces',serif; font-size:48px; color:var(--accent); letter-spacing:2px; line-height:1; }
   .calc-result-label { font-size:11px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-top:4px; }
   .calc-tabs { display:flex; gap:1px; background:var(--border); margin-bottom:16px; }
-  .calc-tab { flex:1; padding:11px; text-align:center; background:var(--card2); font-size:11px; letter-spacing:2px; text-transform:uppercase; cursor:pointer; color:var(--muted); transition:all 0.2s; border:none; font-family:'DM Sans',sans-serif; }
-  .calc-tab.active { background:rgba(232,255,71,0.08); color:var(--accent); }
+  .calc-tab { flex:1; padding:11px; text-align:center; background:var(--card2); font-size:11px; letter-spacing:2px; text-transform:uppercase; cursor:pointer; color:var(--muted); transition:all 0.2s; border:none; font-family:'Nunito',sans-serif; }
+  .calc-tab.active { background:rgba(232,160,40,0.1); color:var(--accent); }
+
+  /* SPEED CONVERTER */
+  .conv-block { background:var(--card); border:1px solid var(--border); padding:20px 16px; margin:0 16px 1px; border-radius:12px; }
+  .conv-row { display:flex; align-items:center; gap:10px; }
+  .conv-input { flex:1; }
+  .conv-unit { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); white-space:nowrap; min-width:44px; }
+  .conv-result { font-family:'Fraunces',serif; font-size:32px; font-weight:800; color:var(--accent); letter-spacing:-0.5px; min-width:90px; text-align:right; }
+  .conv-divider-bar { text-align:center; padding:8px 16px; font-size:10px; color:var(--muted2); letter-spacing:2px; text-transform:uppercase; }
+
+  /* CHARTS */
+  .chart-card { background:var(--card); border:1px solid var(--border); margin:0 16px 12px; padding:14px 14px 8px; border-radius:12px; }
+  .chart-title { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; font-weight:600; }
+
+  /* GPX IMPORT */
+  .gpx-drop { border:2px dashed var(--border); padding:16px; text-align:center; cursor:pointer; color:var(--muted); font-size:13px; transition:all 0.2s; margin-bottom:10px; border-radius:8px; font-weight:500; }
+  .gpx-drop:hover { border-color:var(--accent); color:var(--accent); }
+  .gpx-status-msg { font-size:11px; color:var(--green); line-height:1.5; margin-top:4px; }
+  .next-session-banner { background:rgba(232,160,40,0.08); border:1px solid rgba(232,160,40,0.25); margin:0 16px 12px; padding:14px; border-radius:12px; }
+
+  /* CELEBRATION MODAL */
+  .cel-stat { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); }
+  .cel-stat:last-of-type { border-bottom:none; }
+  .cel-val { font-family:'Fraunces',serif; font-size:22px; color:var(--accent); letter-spacing:1px; }
+  .cel-label { font-size:11px; color:var(--muted); letter-spacing:0.5px; }
+  .cel-session-badge { background:rgba(232,160,40,0.08); border:1px solid rgba(232,160,40,0.2); padding:10px 14px; margin:14px 0 10px; }
+  .cel-prog-bar { height:3px; background:var(--border); margin-top:10px; border-radius:2px; overflow:hidden; }
+  .cel-prog-fill { height:100%; background:var(--accent); border-radius:2px; }
+
+  /* GPX RUN EXTRAS */
+  .run-expand-btn { font-size:10px; color:var(--muted); cursor:pointer; letter-spacing:1px; text-transform:uppercase; margin-top:4px; display:inline-block; }
+  .run-extras { display:none; margin-top:8px; }
+  .run-extras.open { display:block; }
+  .splits-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; margin-top:6px; }
+  .split-cell { background:var(--card2); padding:5px 6px; font-size:10px; text-align:center; }
+  .split-km { color:var(--muted); letter-spacing:0.5px; }
+  .split-pace { font-family:'Fraunces',serif; font-size:14px; color:var(--accent); }
+  .hr-zone-bar { display:flex; height:6px; border-radius:3px; overflow:hidden; margin:6px 0 2px; }
+  .cadence-badge { display:inline-block; font-size:10px; padding:2px 8px; background:rgba(123,108,186,0.15); border:1px solid rgba(123,108,186,0.3); color:var(--purple); margin-top:4px; }
 </style>
 </head>
 <body>
@@ -181,9 +239,9 @@
   </div>
 
   <div class="stats-row">
-    <div class="stat-box"><div class="stat-val" id="stat-runs">0</div><div class="stat-label">Runs Done</div></div>
-    <div class="stat-box"><div class="stat-val" id="stat-km">0</div><div class="stat-label">Total KM</div></div>
-    <div class="stat-box"><div class="stat-val" id="stat-week">W1</div><div class="stat-label">Current Week</div></div>
+    <div class="stat-box stat-teal"><div class="stat-val" id="stat-runs">0</div><div class="stat-label">Runs Done</div></div>
+    <div class="stat-box stat-gold"><div class="stat-val" id="stat-km">0</div><div class="stat-label">Total KM</div></div>
+    <div class="stat-box stat-blue"><div class="stat-val" id="stat-week">W1</div><div class="stat-label">Current Week</div></div>
   </div>
 
   <div class="prog-container">
@@ -233,7 +291,27 @@
     <div class="header-label">Record Session</div>
     <div class="header-title">LOG A<br><span>RUN</span></div>
   </div>
+
+  <div class="next-session-banner" id="next-session-banner" style="display:none">
+    <div style="font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Next Up — Auto-assigned</div>
+    <div id="next-session-info"></div>
+  </div>
+
   <div class="card">
+    <div class="form-group">
+      <label class="form-label">Import from GPS (optional)</label>
+      <div class="gpx-drop" onclick="document.getElementById('gpx-file').click()">
+        📁 Upload .gpx file — Strava or Garmin
+        <input type="file" id="gpx-file" accept=".gpx" style="display:none" onchange="parseGPX(this)">
+      </div>
+      <div id="gpx-status" class="gpx-status-msg" style="display:none"></div>
+      <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+        <label style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);white-space:nowrap">Max HR</label>
+        <input type="number" id="max-hr-setting" placeholder="190" min="140" max="230" style="width:80px" oninput="S.set('maxHR', parseInt(this.value))">
+        <span style="font-size:11px;color:var(--muted2)">bpm (for HR zone calc)</span>
+      </div>
+    </div>
+    <div style="height:1px;background:var(--border);margin:4px 0 16px"></div>
     <div class="form-group">
       <label class="form-label">Date</label>
       <input type="date" id="log-date">
@@ -282,73 +360,77 @@
     <div class="header-label">Your Progress</div>
     <div class="header-title">WEEKLY<br><span>STATS</span></div>
   </div>
-  <div style="padding:0 16px 8px;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted)">This Week</div>
+  <div style="padding:0 16px 8px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600">This Week</div>
   <div class="week-summary-row">
-    <div class="summary-box"><div class="summary-val" id="ws-runs">0</div><div class="summary-label">Sessions Done</div></div>
-    <div class="summary-box"><div class="summary-val" id="ws-planned">3</div><div class="summary-label">Sessions Planned</div></div>
-    <div class="summary-box"><div class="summary-val" id="ws-km">0.0</div><div class="summary-label">KM This Week</div></div>
-    <div class="summary-box"><div class="summary-val" id="ws-rpe">—</div><div class="summary-label">Avg RPE</div></div>
+    <div class="summary-box sum-teal"><div class="summary-val" id="ws-runs">0</div><div class="summary-label">Sessions Done</div></div>
+    <div class="summary-box sum-blue"><div class="summary-val" id="ws-planned">3</div><div class="summary-label">Sessions Planned</div></div>
+    <div class="summary-box sum-gold"><div class="summary-val" id="ws-km">0.0</div><div class="summary-label">KM This Week</div></div>
+    <div class="summary-box sum-coral"><div class="summary-val" id="ws-rpe">—</div><div class="summary-label">Avg RPE</div></div>
   </div>
   <div class="card" style="margin-top:4px">
     <div class="card-label">Avg Pace This Week</div>
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--accent);letter-spacing:2px;line-height:1" id="ws-pace">—</div>
+    <div style="font-family:'Fraunces',serif;font-size:42px;color:var(--accent);letter-spacing:2px;line-height:1" id="ws-pace">—</div>
     <div style="font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:1px">per kilometre</div>
   </div>
-  <div style="padding:0 16px 8px;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-top:4px">All Time</div>
+  <div style="padding:0 16px 8px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:4px;font-weight:600">All Time</div>
   <div class="week-summary-row">
-    <div class="summary-box"><div class="summary-val" id="at-runs">0</div><div class="summary-label">Total Runs</div></div>
-    <div class="summary-box"><div class="summary-val" id="at-km">0</div><div class="summary-label">Total KM</div></div>
-    <div class="summary-box"><div class="summary-val" id="at-rpe">—</div><div class="summary-label">Avg RPE</div></div>
-    <div class="summary-box"><div class="summary-val" id="at-sessions">0</div><div class="summary-label">Sessions ✓</div></div>
+    <div class="summary-box sum-coral"><div class="summary-val" id="at-runs">0</div><div class="summary-label">Total Runs</div></div>
+    <div class="summary-box sum-gold"><div class="summary-val" id="at-km">0</div><div class="summary-label">Total KM</div></div>
+    <div class="summary-box sum-teal"><div class="summary-val" id="at-rpe">—</div><div class="summary-label">Avg RPE</div></div>
+    <div class="summary-box sum-blue"><div class="summary-val" id="at-sessions">0</div><div class="summary-label">Sessions ✓</div></div>
   </div>
+  <div class="chart-card">
+    <div class="chart-title">Weekly Distance (km)</div>
+    <canvas id="chart-weekly-dist" height="130"></canvas>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Pace Trend (min/km)</div>
+    <canvas id="chart-pace-trend" height="130"></canvas>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Heart Rate Trend (bpm)</div>
+    <canvas id="chart-hr-trend" height="130"></canvas>
+  </div>
+
   <div id="history-list-stats"></div>
 </div>
 
 <!-- ===== CALC ===== -->
 <div class="screen" id="screen-calc">
   <div class="header">
-    <div class="header-label">Run Calculator</div>
-    <div class="header-title">PACE<br><span>CALC</span></div>
+    <div class="header-label">Metric &amp; Imperial</div>
+    <div class="header-title">SPEED<br><span>CONVERT</span></div>
   </div>
-  <div class="card">
-    <div class="calc-tabs">
-      <button class="calc-tab active" onclick="switchCalcTab('pace', this)">Find Pace</button>
-      <button class="calc-tab" onclick="switchCalcTab('time', this)">Find Time</button>
-      <button class="calc-tab" onclick="switchCalcTab('dist', this)">Find Dist</button>
-    </div>
 
-    <!-- FIND PACE -->
-    <div id="calc-pace">
-      <div class="form-group"><label class="form-label">Distance (km)</label><input type="number" id="c-dist" placeholder="e.g. 5" step="0.01" oninput="calcPaceResult()"></div>
-      <div class="form-group"><label class="form-label">Target Time (mm:ss or hh:mm:ss)</label><input type="text" id="c-time" placeholder="e.g. 30:00" oninput="calcPaceResult()"></div>
-      <div class="calc-result" id="r-pace" style="display:none">
-        <div class="calc-result-val" id="rv-pace">—</div>
-        <div class="calc-result-label">min/km required pace</div>
-      </div>
-    </div>
-
-    <!-- FIND TIME -->
-    <div id="calc-time" style="display:none">
-      <div class="form-group"><label class="form-label">Distance (km)</label><input type="number" id="c-dist2" placeholder="e.g. 5" step="0.01" oninput="calcTimeResult()"></div>
-      <div class="form-group"><label class="form-label">Your Pace (mm:ss /km)</label><input type="text" id="c-pace2" placeholder="e.g. 6:00" oninput="calcTimeResult()"></div>
-      <div class="calc-result" id="r-time" style="display:none">
-        <div class="calc-result-val" id="rv-time">—</div>
-        <div class="calc-result-label">total finish time</div>
-      </div>
-    </div>
-
-    <!-- FIND DIST -->
-    <div id="calc-dist" style="display:none">
-      <div class="form-group"><label class="form-label">Time Available (mm:ss or hh:mm:ss)</label><input type="text" id="c-time3" placeholder="e.g. 45:00" oninput="calcDistResult()"></div>
-      <div class="form-group"><label class="form-label">Your Pace (mm:ss /km)</label><input type="text" id="c-pace3" placeholder="e.g. 7:00" oninput="calcDistResult()"></div>
-      <div class="calc-result" id="r-dist" style="display:none">
-        <div class="calc-result-val" id="rv-dist">—</div>
-        <div class="calc-result-label">km you can cover</div>
-      </div>
+  <div style="padding:0 16px 10px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Metric</div>
+  <div class="conv-block">
+    <div class="conv-row">
+      <div class="conv-input"><label class="form-label">km/h</label><input type="number" id="conv-kmh" placeholder="e.g. 10.5" step="0.1" min="0" oninput="convertSpeeds(this.id)"></div>
+      <div style="padding-top:22px;color:var(--muted)">↔</div>
+      <div class="conv-input"><label class="form-label">min/km</label><input type="text" id="conv-minkm" placeholder="e.g. 5:42" oninput="convertSpeeds(this.id)"></div>
     </div>
   </div>
 
-  <div class="card" id="calc-quick-targets"></div>
+  <div class="conv-divider-bar">or</div>
+
+  <div style="padding:0 16px 10px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Imperial</div>
+  <div class="conv-block">
+    <div class="conv-row">
+      <div class="conv-input"><label class="form-label">mph</label><input type="number" id="conv-mph" placeholder="e.g. 6.5" step="0.1" min="0" oninput="convertSpeeds(this.id)"></div>
+      <div style="padding-top:22px;color:var(--muted)">↔</div>
+      <div class="conv-input"><label class="form-label">min/mile</label><input type="text" id="conv-minmi" placeholder="e.g. 9:39" oninput="convertSpeeds(this.id)"></div>
+    </div>
+  </div>
+
+  <div style="margin:20px 16px 0;background:var(--card);border:1px solid var(--border);padding:16px;display:none" id="conv-result-panel">
+    <div class="card-label">All Equivalent Values</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)">
+      <div style="background:var(--card);padding:12px 10px;text-align:center"><div class="stat-val" id="res-kmh">—</div><div class="stat-label">km/h</div></div>
+      <div style="background:var(--card);padding:12px 10px;text-align:center"><div class="stat-val" id="res-minkm">—</div><div class="stat-label">min/km</div></div>
+      <div style="background:var(--card);padding:12px 10px;text-align:center"><div class="stat-val" id="res-mph">—</div><div class="stat-label">mph</div></div>
+      <div style="background:var(--card);padding:12px 10px;text-align:center"><div class="stat-val" id="res-minmi">—</div><div class="stat-label">min/mile</div></div>
+    </div>
+  </div>
 </div>
 
 <!-- ===== NAV ===== -->
@@ -376,6 +458,17 @@
 </nav>
 
 <div class="toast" id="toast"></div>
+
+<!-- ===== CELEBRATION MODAL ===== -->
+<div class="modal-overlay" id="celebrate-modal" onclick="closeCelebration(event)">
+  <div class="modal-box">
+    <div style="font-size:40px;text-align:center;margin-bottom:6px">🎉</div>
+    <div class="modal-title">RUN LOGGED!</div>
+    <div class="modal-sub">Great work, Darragh.</div>
+    <div id="celebrate-body"></div>
+    <button class="btn-primary" style="margin-top:16px" onclick="closeCelebrationDirect()">NICE ONE!</button>
+  </div>
+</div>
 
 <!-- ===== PRE-RUN CHECKLIST MODAL ===== -->
 <div class="modal-overlay" id="checklist-modal" onclick="closeChecklist(event)">
@@ -640,6 +733,37 @@ function getSessionDesc(s, diff) {
   return s.desc;
 }
 
+function parseWalkMins(desc) {
+  const warmup = desc.match(/^(\d+)\s*min\s*walk/i);
+  const cooldown = desc.match(/·\s*(\d+)\s*min\s*walk(?:\s*cool[\s-]?down)?\.?\s*$/i);
+  return (warmup ? parseInt(warmup[1]) : 0) + (cooldown ? parseInt(cooldown[1]) : 0);
+}
+
+function getNextSession() {
+  const completed = S.completed();
+  for (const week of PROGRAM) {
+    for (let si = 0; si < week.sessions.length; si++) {
+      const key = `${week.week}-${si}`;
+      if (!completed.includes(key)) return { week, si, key, session: week.sessions[si] };
+    }
+  }
+  return null;
+}
+
+function renderNextSessionBanner() {
+  const next = getNextSession();
+  const banner = document.getElementById('next-session-banner');
+  if (!next) { banner.style.display = 'none'; return; }
+  const diff = getWeekDiff(next.week.week);
+  const desc = getSessionDesc(next.session, diff);
+  const walkMins = parseWalkMins(desc);
+  banner.style.display = 'block';
+  document.getElementById('next-session-info').innerHTML = `
+    <div style="font-family:'Fraunces',serif;font-size:17px;letter-spacing:1px;margin-bottom:4px">W${next.week.week} · ${next.session.name}</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.5">${desc}</div>
+    ${walkMins > 0 ? `<div style="font-size:10px;color:var(--muted2);margin-top:6px;letter-spacing:0.5px">${walkMins} min walk will be deducted from net pace</div>` : ''}`;
+}
+
 // ============================================================
 // NAV
 // ============================================================
@@ -650,8 +774,8 @@ function switchScreen(id, btn) {
   btn.classList.add('active');
   if (id === 'home') renderHome();
   if (id === 'program') renderProgram();
+  if (id === 'log') renderNextSessionBanner();
   if (id === 'stats') renderStats();
-  if (id === 'calc') renderCalcTargets();
 }
 
 // ============================================================
@@ -690,12 +814,12 @@ function renderHome() {
   const rpeColor = r.rpe >= 8 ? 'var(--red)' : r.rpe >= 5 ? 'var(--orange)' : 'var(--green)';
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:12px">
-      <div style="text-align:center;min-width:40px"><div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--accent);line-height:1">${d.getDate()}</div><div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">${d.toLocaleString('default',{month:'short'}).toUpperCase()}</div></div>
+      <div style="text-align:center;min-width:40px"><div style="font-family:'Fraunces',serif;font-size:26px;color:var(--accent);line-height:1">${d.getDate()}</div><div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">${d.toLocaleString('default',{month:'short'}).toUpperCase()}</div></div>
       <div style="width:1px;height:38px;background:var(--border)"></div>
       <div style="flex:1">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;margin-bottom:2px">${r.dist} km · ${r.time}</div>
+        <div style="font-family:'Fraunces',serif;font-size:20px;letter-spacing:1px;margin-bottom:2px">${r.dist} km · ${r.time}</div>
         <div style="font-size:11px;color:var(--muted)">${r.type ? r.type.charAt(0).toUpperCase()+r.type.slice(1) : 'Run'}${r.hr?' · ❤️ '+r.hr+' bpm':''}${r.cal?' · 🔥 '+r.cal+' kcal':''}</div>
-        ${r.rpe ? `<span class="rpe-badge" style="background:rgba(0,0,0,0.3);border:1px solid ${rpeColor};color:${rpeColor}">RPE ${r.rpe}</span>` : ''}
+        ${r.rpe ? `<span class="rpe-badge" style="background:rgba(30,26,22,0.08);border:1px solid ${rpeColor};color:${rpeColor}">RPE ${r.rpe}</span>` : ''}
       </div>
       <div><div class="run-pace-badge">${r.pace||'—'}</div><div class="run-pace-label">/km</div></div>
     </div>`;
@@ -712,7 +836,12 @@ function renderProgram() {
   const container = document.getElementById('program-list');
   container.innerHTML = '';
 
+  const currentWeek = PROGRAM.find(w =>
+    !w.sessions.every((_, i) => completed.includes(`${w.week}-${i}`))
+  )?.week ?? 12;
+
   PROGRAM.forEach(week => {
+    if (week.week < currentWeek - 1) return;
     const diff = getWeekDiff(week.week);
     const doneKeys = week.sessions.map((_,i) => `${week.week}-${i}`).filter(k => completed.includes(k));
     const allDone = doneKeys.length === week.sessions.length;
@@ -889,6 +1018,8 @@ function saveWeekRating(rating) {
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
+  const savedMaxHR = S.get('maxHR');
+  if (savedMaxHR) document.getElementById('max-hr-setting').value = savedMaxHR;
   ['log-dist','log-time'].forEach(id => {
     document.getElementById(id).addEventListener('input', () => {
       document.getElementById('log-pace').value = calcPaceStr(document.getElementById('log-dist').value, document.getElementById('log-time').value);
@@ -898,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', () => {
   rpe.addEventListener('input', () => document.getElementById('rpe-display').textContent = rpe.value);
   renderHome();
   renderProgram();
-  renderCalcTargets();
+  renderNextSessionBanner();
   setupPWA();
 });
 
@@ -919,21 +1050,68 @@ function saveRun() {
   const dist = document.getElementById('log-dist').value;
   const time = document.getElementById('log-time').value;
   if (!date || !dist || !time) { showToast('Fill in date, distance & time'); return; }
+
+  // Find next session before marking complete
+  const nextSess = getNextSession();
+
+  // Parse raw time to seconds
+  const tp = time.split(':');
+  const rawSecs = tp.length === 3
+    ? parseInt(tp[0])*3600 + parseInt(tp[1])*60 + parseInt(tp[2])
+    : parseInt(tp[0])*60 + parseInt(tp[1]);
+
+  // Walk deduction from program session description
+  let walkMins = 0;
+  if (nextSess) {
+    const diff = getWeekDiff(nextSess.week.week);
+    walkMins = parseWalkMins(getSessionDesc(nextSess.session, diff));
+  }
+  const netSecs = Math.max(rawSecs - walkMins * 60, 0);
+  const distVal = parseFloat(dist);
+  const pace = (netSecs > 0 && distVal > 0)
+    ? `${Math.floor((netSecs/distVal)/60)}:${Math.round((netSecs/distVal)%60).toString().padStart(2,'0')}`
+    : calcPaceStr(dist, time);
+
   const run = {
-    id: Date.now(), date, dist: parseFloat(dist), time,
-    pace: calcPaceStr(dist, time),
+    id: Date.now(), date, dist: distVal, time, pace,
+    walkDeducted: walkMins,
     hr: document.getElementById('log-hr').value ? parseInt(document.getElementById('log-hr').value) : null,
     cal: document.getElementById('log-cal').value ? parseInt(document.getElementById('log-cal').value) : null,
     type: document.getElementById('log-type').value,
     rpe: parseInt(document.getElementById('log-rpe').value),
     notes: document.getElementById('log-notes').value
   };
+
+  // Attach GPX data if present
+  if (window._pendingGpxData) {
+    Object.assign(run, window._pendingGpxData);
+    window._pendingGpxData = null;
+  }
+
   const runs = S.runs();
   runs.unshift(run);
   S.saveRuns(runs);
+
+  // Auto-mark next session complete
+  let completedSession = null;
+  if (nextSess) {
+    const completed = S.completed();
+    if (!completed.includes(nextSess.key)) {
+      completed.push(nextSess.key);
+      S.saveCompleted(completed);
+      completedSession = nextSess;
+      const weekKeys = nextSess.week.sessions.map((_,i) => `${nextSess.week.week}-${i}`);
+      const allDone = weekKeys.every(k => completed.includes(k));
+      if (allDone && !S.weekRatings()[nextSess.week.week]) {
+        setTimeout(() => openWeekReview(nextSess.week.week), 1400);
+      }
+    }
+  }
+
   clearForm();
-  showToast('Run saved! 🏃');
   renderHome();
+  renderNextSessionBanner();
+  showCelebration(run, completedSession);
 }
 
 function clearForm() {
@@ -942,6 +1120,9 @@ function clearForm() {
   document.getElementById('log-rpe').value = '5';
   document.getElementById('rpe-display').textContent = '5';
   document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('gpx-status').style.display = 'none';
+  document.getElementById('gpx-file').value = '';
+  window._pendingGpxData = null;
 }
 
 // ============================================================
@@ -981,21 +1162,50 @@ function renderStats() {
   const hist = document.getElementById('history-list-stats');
   hist.innerHTML = '<div style="padding:0 16px 8px;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-top:8px">Run Log</div>';
   if (!runs.length) { hist.innerHTML += `<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No runs yet.</div></div>`; return; }
-  runs.slice(0, 20).forEach(r => {
+  runs.slice(0, 20).forEach((r, ri) => {
     const d = new Date(r.date + 'T12:00:00');
     const rpeColor = r.rpe >= 8 ? 'var(--red)' : r.rpe >= 5 ? 'var(--orange)' : 'var(--green)';
+    const walkNote = r.walkDeducted > 0 ? `<div class="run-sub" style="color:var(--muted2)">${r.walkDeducted}min walk deducted</div>` : '';
+    const gpxBadge = r.source === 'gpx' ? `<span style="font-size:9px;padding:1px 5px;background:rgba(123,108,186,0.15);border:1px solid rgba(123,108,186,0.3);color:var(--purple);letter-spacing:1px">GPS</span> ` : '';
+
+    // Build GPX extras
+    let extrasHtml = '';
+    if (r.splits && r.splits.length) {
+      const cells = r.splits.map(s => `<div class="split-cell"><div class="split-km">${s.km}km</div><div class="split-pace">${s.pace}</div></div>`).join('');
+      extrasHtml += `<div style="font-size:10px;color:var(--muted);margin-top:8px;letter-spacing:1.5px;text-transform:uppercase">Splits</div><div class="splits-grid">${cells}</div>`;
+    }
+    if (r.hrZones) {
+      const total = Object.values(r.hrZones).reduce((a,b)=>a+b,0) || 1;
+      const zColors = ['#4a9eff','#3cb87a','#e8a028','#d45f52','#c04040'];
+      const zLabels = ['Z1','Z2','Z3','Z4','Z5'];
+      const segs = Object.values(r.hrZones).map((v,i) => `<div class="hr-zone-seg" style="width:${(v/total*100).toFixed(1)}%;background:${zColors[i]}" title="${zLabels[i]}: ${Math.round(v/60)}min"></div>`).join('');
+      const legend = Object.values(r.hrZones).map((v,i) => v > 0 ? `<span style="font-size:9px;color:${zColors[i]};margin-right:6px">${zLabels[i]} ${Math.round(v/60)}m</span>` : '').join('');
+      extrasHtml += `<div style="font-size:10px;color:var(--muted);margin-top:8px;letter-spacing:1.5px;text-transform:uppercase">HR Zones</div><div class="hr-zone-bar">${segs}</div><div style="margin-top:2px">${legend}</div>`;
+    }
+    if (r.avgCadence) {
+      extrasHtml += `<span class="cadence-badge" style="margin-top:6px">${r.avgCadence} spm avg · ${r.maxCadence} spm max</span>`;
+    }
+
     const item = document.createElement('div');
     item.className = 'run-item';
+    item.style.flexDirection = 'column';
+    item.style.alignItems = 'stretch';
+    const extrasId = `extras-${ri}`;
     item.innerHTML = `
-      <div class="run-date-box"><div class="run-date-day">${d.getDate()}</div><div class="run-date-month">${d.toLocaleString('default',{month:'short'}).toUpperCase()}</div></div>
-      <div class="run-divider"></div>
-      <div class="run-stats">
-        <div class="run-main">${r.dist} km · ${r.time}</div>
-        <div class="run-sub">${r.type ? r.type.charAt(0).toUpperCase()+r.type.slice(1) : 'Run'}${r.hr?' · ❤️ '+r.hr:''}${r.cal?' · 🔥 '+r.cal+' kcal':''}</div>
-        ${r.rpe?`<span class="rpe-badge" style="background:rgba(0,0,0,0.3);border:1px solid ${rpeColor};color:${rpeColor}">RPE ${r.rpe}</span>`:''}
-        ${r.notes?`<div class="run-sub" style="margin-top:3px;font-style:italic;font-size:11px">"${r.notes.slice(0,70)}${r.notes.length>70?'…':''}"</div>`:''}
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="run-date-box"><div class="run-date-day">${d.getDate()}</div><div class="run-date-month">${d.toLocaleString('default',{month:'short'}).toUpperCase()}</div></div>
+        <div class="run-divider"></div>
+        <div class="run-stats">
+          <div class="run-main">${gpxBadge}${r.dist} km · ${r.time}</div>
+          <div class="run-sub">${r.type ? r.type.charAt(0).toUpperCase()+r.type.slice(1) : 'Run'}${r.hr?' · ❤️ '+r.hr:''}${r.cal?' · 🔥 '+r.cal+' kcal':''}</div>
+          ${walkNote}
+          ${r.rpe?`<span class="rpe-badge" style="background:rgba(30,26,22,0.08);border:1px solid ${rpeColor};color:${rpeColor}">RPE ${r.rpe}</span>`:''}
+          ${r.notes?`<div class="run-sub" style="margin-top:3px;font-style:italic;font-size:11px">"${r.notes.slice(0,70)}${r.notes.length>70?'…':''}"</div>`:''}
+          ${extrasHtml ? `<div class="run-expand-btn" onclick="document.getElementById('${extrasId}').classList.toggle('open');this.textContent=document.getElementById('${extrasId}').classList.contains('open')?'▲ Hide details':'▼ Show details'">▼ Show details</div>` : ''}
+        </div>
+        <div><div class="run-pace-badge">${r.pace||'—'}</div><div class="run-pace-label">/km</div></div>
       </div>
-      <div><div class="run-pace-badge">${r.pace||'—'}</div><div class="run-pace-label">/km</div></div>`;
+      ${extrasHtml ? `<div class="run-extras" id="${extrasId}">${extrasHtml}</div>` : ''}`;
     hist.appendChild(item);
   });
   if (runs.length) {
@@ -1006,57 +1216,46 @@ function renderStats() {
     clearBtn.onclick = () => { if (confirm('Delete all logged runs?')) { S.saveRuns([]); renderStats(); renderHome(); } };
     hist.appendChild(clearBtn);
   }
+  renderCharts();
 }
 
 // ============================================================
-// PACE CALCULATOR
+// SPEED CONVERTER
 // ============================================================
-function switchCalcTab(tab, btn) {
-  ['pace','time','dist'].forEach(t => {
-    document.getElementById('calc-' + t).style.display = t === tab ? 'block' : 'none';
-  });
-  document.querySelectorAll('.calc-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-}
+function convertSpeeds(sourceId) {
+  const fmtPaceStr = s => `${Math.floor(s/60)}:${Math.round(s%60).toString().padStart(2,'0')}`;
+  const parseMinSec = v => { const m = v.match(/^(\d+):(\d{1,2})$/); return m ? parseInt(m[1])*60+parseInt(m[2]) : null; };
 
-function parseTimeToSecs(s) {
-  const p = s.trim().split(':');
-  if (p.length === 2) return parseInt(p[0])*60 + parseInt(p[1]);
-  if (p.length === 3) return parseInt(p[0])*3600 + parseInt(p[1])*60 + parseInt(p[2]);
-  return null;
-}
+  let kmh = null;
+  if (sourceId === 'conv-kmh') {
+    kmh = parseFloat(document.getElementById('conv-kmh').value);
+  } else if (sourceId === 'conv-minkm') {
+    const s = parseMinSec(document.getElementById('conv-minkm').value);
+    if (s) kmh = 3600 / s;
+  } else if (sourceId === 'conv-mph') {
+    const mph = parseFloat(document.getElementById('conv-mph').value);
+    if (!isNaN(mph) && mph > 0) kmh = mph / 0.621371;
+  } else if (sourceId === 'conv-minmi') {
+    const s = parseMinSec(document.getElementById('conv-minmi').value);
+    if (s) kmh = (3600 / s) * 0.621371;
+  }
 
-function secsToTime(s) {
-  if (s >= 3600) return `${Math.floor(s/3600)}:${Math.floor((s%3600)/60).toString().padStart(2,'0')}:${Math.round(s%60).toString().padStart(2,'0')}`;
-  return `${Math.floor(s/60)}:${Math.round(s%60).toString().padStart(2,'0')}`;
-}
+  if (!kmh || kmh <= 0 || !isFinite(kmh)) return;
 
-function calcPaceResult() {
-  const dist = parseFloat(document.getElementById('c-dist').value);
-  const secs = parseTimeToSecs(document.getElementById('c-time').value);
-  const res = document.getElementById('r-pace');
-  if (!dist || !secs) { res.style.display = 'none'; return; }
-  const ps = secs / dist;
-  document.getElementById('rv-pace').textContent = `${Math.floor(ps/60)}:${Math.round(ps%60).toString().padStart(2,'0')}`;
-  res.style.display = 'block';
-}
+  const secsPerKm = 3600 / kmh;
+  const mph = kmh * 0.621371;
+  const secsPerMile = secsPerKm / 0.621371;
 
-function calcTimeResult() {
-  const dist = parseFloat(document.getElementById('c-dist2').value);
-  const paceSecs = parseTimeToSecs(document.getElementById('c-pace2').value);
-  const res = document.getElementById('r-time');
-  if (!dist || !paceSecs) { res.style.display = 'none'; return; }
-  document.getElementById('rv-time').textContent = secsToTime(Math.round(dist * paceSecs));
-  res.style.display = 'block';
-}
+  if (sourceId !== 'conv-kmh') document.getElementById('conv-kmh').value = kmh.toFixed(2);
+  if (sourceId !== 'conv-minkm') document.getElementById('conv-minkm').value = fmtPaceStr(secsPerKm);
+  if (sourceId !== 'conv-mph') document.getElementById('conv-mph').value = mph.toFixed(2);
+  if (sourceId !== 'conv-minmi') document.getElementById('conv-minmi').value = fmtPaceStr(secsPerMile);
 
-function calcDistResult() {
-  const secs = parseTimeToSecs(document.getElementById('c-time3').value);
-  const paceSecs = parseTimeToSecs(document.getElementById('c-pace3').value);
-  const res = document.getElementById('r-dist');
-  if (!secs || !paceSecs) { res.style.display = 'none'; return; }
-  document.getElementById('rv-dist').textContent = (secs / paceSecs).toFixed(2);
-  res.style.display = 'block';
+  document.getElementById('res-kmh').textContent = kmh.toFixed(2);
+  document.getElementById('res-minkm').textContent = fmtPaceStr(secsPerKm);
+  document.getElementById('res-mph').textContent = mph.toFixed(2);
+  document.getElementById('res-minmi').textContent = fmtPaceStr(secsPerMile);
+  document.getElementById('conv-result-panel').style.display = 'block';
 }
 
 // ============================================================
@@ -1107,24 +1306,213 @@ function renderPaceZonesCard() {
     <div class="pace-zone-row"><span style="color:var(--green);font-weight:500">🟢 Race Effort</span><span style="color:var(--muted)">${fmtPace(z.race)} /km target</span></div>`;
 }
 
-function renderCalcTargets() {
-  const el = document.getElementById('calc-quick-targets');
-  if (!el) return;
-  const fiveK = getBenchmark5KSecs();
-  const isDefault = fiveK === 1800;
-  const benchLabel = isDefault ? '~30:00' : fmtPace(fiveK);
-  const targets = [
-    { label: '5K in 28:00', secs: 1680, km: 5 },
-    { label: '5K in 27:00', secs: 1620, km: 5 },
-    { label: '5K in 25:00', secs: 1500, km: 5 },
-    { label: '10K in 60:00', secs: 3600, km: 10 }
-  ];
-  const rows = targets.map(t => {
-    const pace = fmtPace(Math.round(t.secs / t.km));
-    const achieved = t.km === 5 && !isDefault && fiveK <= t.secs;
-    return `<div class="pace-zone-row"><span style="color:var(--muted)">${t.label}${achieved ? ' <span style="color:var(--green)">✓</span>' : ''}</span><span style="color:var(--accent);font-family:'Bebas Neue',sans-serif;font-size:17px">${pace}/km</span></div>`;
-  }).join('');
-  el.innerHTML = `<div class="card-label">Quick Targets — Your 5K: ${benchLabel}</div>${rows}`;
+function renderCalcTargets() { /* removed */ }
+
+// ============================================================
+// CELEBRATION MODAL
+// ============================================================
+function showCelebration(run, completedSession) {
+  const totalSessions = S.completed().length;
+  const pct = Math.min(100, (totalSessions / 36) * 100).toFixed(0);
+  const walkNote = run.walkDeducted > 0
+    ? `<div style="font-size:11px;color:var(--muted);margin:8px 0;padding:8px;background:rgba(255,255,255,0.03);border-left:2px solid var(--muted2)">${run.walkDeducted} min warm-up/cool-down walk deducted from pace</div>`
+    : '';
+  let sessionBadge = '';
+  if (completedSession) {
+    sessionBadge = `<div class="cel-session-badge">
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Session Ticked Off ✓</div>
+      <div style="font-family:'Fraunces',serif;font-size:18px;letter-spacing:1px">W${completedSession.week.week} · ${completedSession.session.name}</div>
+    </div>`;
+  }
+  document.getElementById('celebrate-body').innerHTML = `
+    <div class="cel-stat"><span class="cel-label">Distance</span><span class="cel-val">${run.dist} km</span></div>
+    <div class="cel-stat"><span class="cel-label">Time</span><span class="cel-val">${run.time}</span></div>
+    <div class="cel-stat"><span class="cel-label">Net Pace</span><span class="cel-val">${run.pace||'—'} /km</span></div>
+    ${walkNote}${sessionBadge}
+    <div style="margin-top:10px">
+      <div style="display:flex;justify-content:space-between;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">
+        <span>Program Progress</span><span>${totalSessions} / 36 sessions</span>
+      </div>
+      <div class="cel-prog-bar"><div class="cel-prog-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  document.getElementById('celebrate-modal').classList.add('open');
+}
+function closeCelebration(e) { if (e.target === e.currentTarget) closeCelebrationDirect(); }
+function closeCelebrationDirect() { document.getElementById('celebrate-modal').classList.remove('open'); }
+
+// ============================================================
+// CHARTS
+// ============================================================
+const _charts = {};
+function renderCharts() {
+  if (typeof Chart === 'undefined') return;
+  const runs = S.runs().slice().reverse();
+  const chartDefaults = {
+    plugins: { legend: { display: false } },
+    animation: false,
+    scales: {
+      x: { ticks: { color: '#8a7a6e', font: { size: 9 } }, grid: { display: false } },
+      y: { ticks: { color: '#8a7a6e', font: { size: 9 } }, grid: { color: '#e4d8c8' } }
+    }
+  };
+
+  // Weekly distance
+  const weekMap = {};
+  runs.forEach(r => {
+    const d = new Date(r.date + 'T12:00:00');
+    const mon = new Date(d); mon.setDate(d.getDate() - ((d.getDay()+6)%7)); mon.setHours(0,0,0,0);
+    const k = mon.toISOString().split('T')[0];
+    weekMap[k] = (weekMap[k]||0) + (r.dist||0);
+  });
+  const wKeys = Object.keys(weekMap).sort().slice(-8);
+  const wLabels = wKeys.map(k => { const d = new Date(k+'T12:00:00'); return `${d.getDate()}/${d.getMonth()+1}`; });
+  const wVals = wKeys.map(k => +weekMap[k].toFixed(1));
+  if (_charts.weekly) _charts.weekly.destroy();
+  _charts.weekly = new Chart(document.getElementById('chart-weekly-dist').getContext('2d'), {
+    type: 'bar',
+    data: { labels: wLabels, datasets: [{ data: wVals, backgroundColor: 'rgba(232,160,40,0.6)', borderColor: '#e8a028', borderWidth: 1 }] },
+    options: chartDefaults
+  });
+
+  // Pace trend
+  const pRuns = runs.filter(r => r.pace).slice(-20);
+  const pSecs = pRuns.map(r => { const p = r.pace.split(':'); return parseInt(p[0])*60+parseInt(p[1]); });
+  const pLabels = pRuns.map(r => { const d = new Date(r.date+'T12:00:00'); return `${d.getDate()}/${d.getMonth()+1}`; });
+  if (_charts.pace) _charts.pace.destroy();
+  _charts.pace = new Chart(document.getElementById('chart-pace-trend').getContext('2d'), {
+    type: 'line',
+    data: { labels: pLabels, datasets: [{ data: pSecs, borderColor: '#d45f52', backgroundColor: 'rgba(212,95,82,0.1)', fill: true, tension: 0.3, pointBackgroundColor: '#d45f52', pointRadius: 3 }] },
+    options: { ...chartDefaults, scales: { ...chartDefaults.scales, y: { ...chartDefaults.scales.y, reverse: true, ticks: { color: '#8a7a6e', font: { size: 9 }, callback: v => `${Math.floor(v/60)}:${(v%60).toString().padStart(2,'0')}` } } } }
+  });
+
+  // HR trend
+  const hRuns = runs.filter(r => r.hr).slice(-20);
+  const ctx3 = document.getElementById('chart-hr-trend').getContext('2d');
+  if (_charts.hr) _charts.hr.destroy();
+  if (hRuns.length < 2) {
+    ctx3.clearRect(0, 0, ctx3.canvas.width, ctx3.canvas.height);
+    ctx3.fillStyle = '#b0a396'; ctx3.font = '12px Nunito'; ctx3.textAlign = 'center';
+    ctx3.fillText('Log HR data to see trend', ctx3.canvas.width/2, 65);
+    return;
+  }
+  const hLabels = hRuns.map(r => { const d = new Date(r.date+'T12:00:00'); return `${d.getDate()}/${d.getMonth()+1}`; });
+  _charts.hr = new Chart(ctx3, {
+    type: 'line',
+    data: { labels: hLabels, datasets: [{ data: hRuns.map(r=>r.hr), borderColor: '#c04040', backgroundColor: 'rgba(192,64,64,0.1)', fill: true, tension: 0.3, pointBackgroundColor: '#c04040', pointRadius: 3 }] },
+    options: chartDefaults
+  });
+}
+
+// ============================================================
+// GPX IMPORT
+// ============================================================
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371, dLat = (lat2-lat1)*Math.PI/180, dLon = (lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function parseGPX(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const xml = new DOMParser().parseFromString(e.target.result, 'text/xml');
+      const trkpts = Array.from(xml.querySelectorAll('trkpt'));
+      if (!trkpts.length) { showToast('No track points found'); return; }
+
+      const points = trkpts.map(pt => {
+        const lat = parseFloat(pt.getAttribute('lat'));
+        const lon = parseFloat(pt.getAttribute('lon'));
+        const timeEl = pt.querySelector('time');
+        const time = timeEl ? new Date(timeEl.textContent) : null;
+        const hrNodes = pt.getElementsByTagNameNS('*', 'hr');
+        const cadNodes = pt.getElementsByTagNameNS('*', 'cad');
+        return {
+          lat, lon, time,
+          hr: hrNodes.length ? parseInt(hrNodes[0].textContent) : null,
+          cad: cadNodes.length ? parseInt(cadNodes[0].textContent) : null
+        };
+      }).filter(p => !isNaN(p.lat) && !isNaN(p.lon));
+
+      // Cumulative distance
+      let totalDist = 0;
+      const cumDist = [0];
+      for (let i = 1; i < points.length; i++) {
+        totalDist += haversine(points[i-1].lat, points[i-1].lon, points[i].lat, points[i].lon);
+        cumDist.push(totalDist);
+      }
+
+      // Total time
+      const t0 = points[0].time, tN = points[points.length-1].time;
+      const totalSecs = (t0 && tN) ? Math.round((tN - t0) / 1000) : 0;
+
+      // Km splits
+      const splits = [];
+      let kmCount = 1, splitStartTime = t0;
+      for (let i = 1; i < points.length; i++) {
+        if (cumDist[i] >= kmCount) {
+          const segDist = cumDist[i] - cumDist[i-1];
+          const frac = segDist > 0 ? 1 - (cumDist[i]-kmCount)/segDist : 1;
+          const splitEnd = (points[i-1].time && points[i].time)
+            ? new Date(points[i-1].time.getTime() + (points[i].time - points[i-1].time)*frac)
+            : points[i].time;
+          const splitSecs = (splitStartTime && splitEnd) ? Math.round((splitEnd - splitStartTime)/1000) : 0;
+          if (splitSecs > 0) splits.push({ km: kmCount, pace: `${Math.floor(splitSecs/60)}:${Math.round(splitSecs%60).toString().padStart(2,'0')}` });
+          splitStartTime = splitEnd;
+          kmCount++;
+        }
+      }
+
+      // HR zones
+      const hrPts = points.filter(p => p.hr);
+      let avgHR = null, hrZones = null;
+      if (hrPts.length) {
+        avgHR = Math.round(hrPts.reduce((s,p) => s+p.hr, 0) / hrPts.length);
+        const maxHR = parseInt(S.get('maxHR') || 190);
+        const secPerPt = totalSecs / points.length;
+        hrZones = {z1:0,z2:0,z3:0,z4:0,z5:0};
+        hrPts.forEach(p => {
+          const pct = p.hr / maxHR;
+          if (pct < 0.60) hrZones.z1 += secPerPt;
+          else if (pct < 0.70) hrZones.z2 += secPerPt;
+          else if (pct < 0.80) hrZones.z3 += secPerPt;
+          else if (pct < 0.90) hrZones.z4 += secPerPt;
+          else hrZones.z5 += secPerPt;
+        });
+        Object.keys(hrZones).forEach(k => hrZones[k] = Math.round(hrZones[k]));
+      }
+
+      // Cadence
+      const cadPts = points.filter(p => p.cad);
+      const avgCadence = cadPts.length ? Math.round(cadPts.reduce((s,p)=>s+p.cad,0)/cadPts.length) : null;
+      const maxCadence = cadPts.length ? Math.max(...cadPts.map(p=>p.cad)) : null;
+
+      // Format time
+      const timeStr = totalSecs >= 3600
+        ? `${Math.floor(totalSecs/3600)}:${Math.floor((totalSecs%3600)/60).toString().padStart(2,'0')}:${Math.round(totalSecs%60).toString().padStart(2,'0')}`
+        : `${Math.floor(totalSecs/60)}:${Math.round(totalSecs%60).toString().padStart(2,'0')}`;
+
+      const distStr = totalDist.toFixed(2);
+      if (t0) document.getElementById('log-date').value = t0.toISOString().split('T')[0];
+      document.getElementById('log-dist').value = distStr;
+      document.getElementById('log-time').value = timeStr;
+      if (avgHR) document.getElementById('log-hr').value = avgHR;
+      document.getElementById('log-pace').value = calcPaceStr(distStr, timeStr);
+
+      window._pendingGpxData = { splits: splits.length ? splits : null, hrZones, avgCadence, maxCadence, source: 'gpx' };
+
+      const statusEl = document.getElementById('gpx-status');
+      statusEl.style.display = 'block';
+      statusEl.textContent = `✓ ${distStr} km · ${timeStr}${splits.length?' · '+splits.length+' splits':''}${avgHR?' · HR '+avgHR+' bpm':''}${avgCadence?' · '+avgCadence+' spm':''}`;
+      showToast('GPX imported!');
+    } catch(err) {
+      showToast('Error reading GPX file');
+      console.error(err);
+    }
+  };
+  reader.readAsText(file);
 }
 
 // ============================================================
@@ -1137,10 +1525,10 @@ function setupPWA() {
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#080808';
   ctx.fillRect(0, 0, sz, sz);
-  ctx.fillStyle = '#e8ff47';
+  ctx.fillStyle = '#e8a028';
   ctx.fillRect(0, 0, sz, 28);
   ctx.fillRect(0, 0, 28, sz);
-  ctx.fillStyle = '#e8ff47';
+  ctx.fillStyle = '#e8a028';
   ctx.font = `bold ${Math.round(sz * 0.72)}px sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
