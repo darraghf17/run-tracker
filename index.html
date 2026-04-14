@@ -227,6 +227,17 @@
   .split-pace { font-family:'Fraunces',serif; font-size:14px; color:var(--accent); }
   .hr-zone-bar { display:flex; height:6px; border-radius:3px; overflow:hidden; margin:6px 0 2px; }
   .cadence-badge { display:inline-block; font-size:10px; padding:2px 8px; background:rgba(123,108,186,0.15); border:1px solid rgba(123,108,186,0.3); color:var(--purple); margin-top:4px; }
+
+  /* SWIPE-TO-REVEAL */
+  .run-swipe-wrapper { position:relative; overflow:hidden; margin:0 16px 8px; border-radius:6px; }
+  .run-swipe-content { background:var(--card); border:1px solid var(--border); padding:14px; display:flex; flex-direction:column; align-items:stretch; border-radius:6px; transition:transform 0.2s ease; will-change:transform; }
+  .run-swipe-content.swiped { transform:translateX(-128px); border-radius:6px 0 0 6px; }
+  .run-actions { position:absolute; right:0; top:0; bottom:0; width:128px; display:flex; border-radius:0 6px 6px 0; overflow:hidden; }
+  .run-action-btn { flex:1; border:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; font-size:10px; letter-spacing:1px; text-transform:uppercase; font-family:'Nunito',sans-serif; font-weight:600; transition:opacity 0.15s; }
+  .run-action-btn:active { opacity:0.75; }
+  .run-action-edit { background:var(--blue); color:#fff; }
+  .run-action-delete { background:var(--red); color:#fff; }
+  .run-action-btn span { font-size:18px; line-height:1; }
 </style>
 </head>
 <body>
@@ -240,7 +251,7 @@
 
   <div class="stats-row">
     <div class="stat-box stat-teal"><div class="stat-val" id="stat-runs">0</div><div class="stat-label">Runs Done</div></div>
-    <div class="stat-box stat-gold"><div class="stat-val" id="stat-km">0</div><div class="stat-label">Total KM</div></div>
+    <div class="stat-box stat-gold"><div class="stat-val" id="stat-km">0</div><div class="stat-label" id="stat-km-label">Total KM</div></div>
     <div class="stat-box stat-blue"><div class="stat-val" id="stat-week">W1</div><div class="stat-label">Current Week</div></div>
   </div>
 
@@ -349,33 +360,38 @@
       <label class="form-label">Notes (optional)</label>
       <textarea id="log-notes" placeholder="How did it feel? Any pain? Pace on target?"></textarea>
     </div>
-    <button class="btn-primary" onclick="saveRun()">SAVE RUN</button>
+    <div id="form-errors" style="display:none;color:var(--red);font-size:12px;margin-bottom:10px;padding:10px 12px;background:rgba(192,64,64,0.07);border:1px solid rgba(192,64,64,0.25);border-radius:4px;line-height:1.8"></div>
+    <button class="btn-primary" id="save-run-btn" onclick="saveRun()">SAVE RUN</button>
+    <button class="btn-secondary" id="cancel-edit-btn" style="display:none;border-color:var(--red);color:var(--red)" onclick="cancelEdit()">Cancel Edit</button>
     <button class="btn-secondary" onclick="clearForm()">Clear form</button>
   </div>
 </div>
 
 <!-- ===== STATS ===== -->
 <div class="screen" id="screen-stats">
-  <div class="header">
-    <div class="header-label">Your Progress</div>
-    <div class="header-title">WEEKLY<br><span>STATS</span></div>
+  <div class="header" style="display:flex;align-items:flex-end;justify-content:space-between">
+    <div>
+      <div class="header-label">Your Progress</div>
+      <div class="header-title">WEEKLY<br><span>STATS</span></div>
+    </div>
+    <button id="units-toggle-btn" onclick="toggleUnits()" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:'Nunito',sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:6px 14px;cursor:pointer;border-radius:20px;margin-bottom:16px">km</button>
   </div>
   <div style="padding:0 16px 8px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600">This Week</div>
   <div class="week-summary-row">
     <div class="summary-box sum-teal"><div class="summary-val" id="ws-runs">0</div><div class="summary-label">Sessions Done</div></div>
     <div class="summary-box sum-blue"><div class="summary-val" id="ws-planned">3</div><div class="summary-label">Sessions Planned</div></div>
-    <div class="summary-box sum-gold"><div class="summary-val" id="ws-km">0.0</div><div class="summary-label">KM This Week</div></div>
+    <div class="summary-box sum-gold"><div class="summary-val" id="ws-km">0.0</div><div class="summary-label" id="ws-km-label">KM This Week</div></div>
     <div class="summary-box sum-coral"><div class="summary-val" id="ws-rpe">—</div><div class="summary-label">Avg RPE</div></div>
   </div>
   <div class="card" style="margin-top:4px">
     <div class="card-label">Avg Pace This Week</div>
     <div style="font-family:'Fraunces',serif;font-size:42px;color:var(--accent);letter-spacing:2px;line-height:1" id="ws-pace">—</div>
-    <div style="font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:1px">per kilometre</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:1px" id="ws-pace-label">per kilometre</div>
   </div>
   <div style="padding:0 16px 8px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:4px;font-weight:600">All Time</div>
   <div class="week-summary-row">
     <div class="summary-box sum-coral"><div class="summary-val" id="at-runs">0</div><div class="summary-label">Total Runs</div></div>
-    <div class="summary-box sum-gold"><div class="summary-val" id="at-km">0</div><div class="summary-label">Total KM</div></div>
+    <div class="summary-box sum-gold"><div class="summary-val" id="at-km">0</div><div class="summary-label" id="at-km-label">Total KM</div></div>
     <div class="summary-box sum-teal"><div class="summary-val" id="at-rpe">—</div><div class="summary-label">Avg RPE</div></div>
     <div class="summary-box sum-blue"><div class="summary-val" id="at-sessions">0</div><div class="summary-label">Sessions ✓</div></div>
   </div>
@@ -495,6 +511,54 @@
 </div>
 
 <script>
+// ============================================================
+// CONSTANTS
+// ============================================================
+const TOTAL_SESSIONS = 36;
+const DEFAULT_MAX_HR = 190;
+const KM_TO_MILES    = 0.621371;
+
+const PACE_EASY_LO  = 1.208;  const PACE_EASY_HI  = 1.333;
+const PACE_MOD_LO   = 1.042;  const PACE_MOD_HI   = 1.125;
+const PACE_TEMPO_LO = 0.917;  const PACE_TEMPO_HI = 1.000;
+
+const HR_Z1_MAX = 0.60; const HR_Z2_MAX = 0.70;
+const HR_Z3_MAX = 0.80; const HR_Z4_MAX = 0.90;
+
+// ============================================================
+// UTILITY FUNCTIONS
+// ============================================================
+function timeStringToSeconds(str) {
+  if (!str || typeof str !== 'string') return 0;
+  const parts = str.trim().split(':');
+  if (parts.length === 3) return parseInt(parts[0])*3600 + parseInt(parts[1])*60 + parseInt(parts[2]);
+  if (parts.length === 2) return parseInt(parts[0])*60 + parseInt(parts[1]);
+  return 0;
+}
+
+function isValidTimeString(str) {
+  return /^\d{1,2}:\d{2}(:\d{2})?$/.test((str || '').trim());
+}
+
+function getUnits() { return S.get('units') || 'km'; }
+
+function displayDist(km) {
+  if (getUnits() === 'miles') return (parseFloat(km) * KM_TO_MILES).toFixed(2) + ' mi';
+  return km + ' km';
+}
+
+function displayPace(paceStr) {
+  if (!paceStr) return paceStr;
+  if (getUnits() === 'miles') {
+    const s = timeStringToSeconds(paceStr);
+    return s ? fmtPace(Math.round(s / KM_TO_MILES)) + ' /mi' : paceStr;
+  }
+  return paceStr + ' /km';
+}
+
+function distUnitLabel() { return getUnits() === 'miles' ? 'mi' : 'km'; }
+function paceUnitLabel() { return getUnits() === 'miles' ? '/mile' : '/km'; }
+
 // ============================================================
 // PROGRAMME DATA — 12 WEEKS
 // ============================================================
@@ -786,7 +850,10 @@ function renderHome() {
   const runs = S.runs();
   document.getElementById('stat-runs').textContent = runs.length;
   const km = runs.reduce((s, r) => s + (r.dist || 0), 0);
-  document.getElementById('stat-km').textContent = km.toFixed(1);
+  const isM = getUnits() === 'miles';
+  document.getElementById('stat-km').textContent = isM ? (km * KM_TO_MILES).toFixed(1) : km.toFixed(1);
+  const skLabel = document.getElementById('stat-km-label');
+  if (skLabel) skLabel.textContent = isM ? 'Total Miles' : 'Total KM';
 
   const completed = S.completed();
   const sessTotal = completed.length;
@@ -794,7 +861,7 @@ function renderHome() {
   document.getElementById('stat-week').textContent = 'W' + currentWeek;
 
   // Progress
-  const pct = Math.min(100, (sessTotal / 36) * 100);
+  const pct = Math.min(100, (sessTotal / TOTAL_SESSIONS) * 100);
   document.getElementById('prog-fill').style.width = pct + '%';
   document.getElementById('prog-week-label').textContent = `Week ${currentWeek} of 12`;
   const phaseNames = ['Phase 1 — Base', 'Phase 2 — Build', 'Phase 3 — Race Ready'];
@@ -817,11 +884,11 @@ function renderHome() {
       <div style="text-align:center;min-width:40px"><div style="font-family:'Fraunces',serif;font-size:26px;color:var(--accent);line-height:1">${d.getDate()}</div><div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">${d.toLocaleString('default',{month:'short'}).toUpperCase()}</div></div>
       <div style="width:1px;height:38px;background:var(--border)"></div>
       <div style="flex:1">
-        <div style="font-family:'Fraunces',serif;font-size:20px;letter-spacing:1px;margin-bottom:2px">${r.dist} km · ${r.time}</div>
+        <div style="font-family:'Fraunces',serif;font-size:20px;letter-spacing:1px;margin-bottom:2px">${displayDist(r.dist)} · ${r.time}</div>
         <div style="font-size:11px;color:var(--muted)">${r.type ? r.type.charAt(0).toUpperCase()+r.type.slice(1) : 'Run'}${r.hr?' · ❤️ '+r.hr+' bpm':''}${r.cal?' · 🔥 '+r.cal+' kcal':''}</div>
         ${r.rpe ? `<span class="rpe-badge" style="background:rgba(30,26,22,0.08);border:1px solid ${rpeColor};color:${rpeColor}">RPE ${r.rpe}</span>` : ''}
       </div>
-      <div><div class="run-pace-badge">${r.pace||'—'}</div><div class="run-pace-label">/km</div></div>
+      <div><div class="run-pace-badge">${r.pace||'—'}</div><div class="run-pace-label">${paceUnitLabel()}</div></div>
     </div>`;
 }
 
@@ -920,22 +987,26 @@ function renderProgram() {
 
 function sessionPaceNote(pace) {
   const z = calcPaceZones(getBenchmark5KSecs());
+  const ul = paceUnitLabel();
+  const fp = s => getUnits() === 'miles' ? fmtPace(Math.round(s / KM_TO_MILES)) : fmtPace(s);
   const map = {
-    easy:  `<span style="color:var(--accent)">→</span> Easy: ${fmtPace(z.easy[0])}–${fmtPace(z.easy[1])}/km`,
-    mod:   `<span style="color:var(--orange)">→</span> Moderate: ${fmtPace(z.mod[0])}–${fmtPace(z.mod[1])}/km`,
-    tempo: `<span style="color:var(--red)">→</span> Tempo: ${fmtPace(z.tempo[0])}–${fmtPace(z.tempo[1])}/km`,
-    mix:   `<span style="color:var(--purple)">→</span> Easy: ${fmtPace(z.easy[0])}–${fmtPace(z.easy[1])}/km · Tempo: ${fmtPace(z.tempo[0])}–${fmtPace(z.tempo[1])}/km`,
-    race:  `<span style="color:var(--green)">→</span> Target: ${fmtPace(z.race)}/km`
+    easy:  `<span style="color:var(--accent)">→</span> Easy: ${fp(z.easy[0])}–${fp(z.easy[1])}${ul}`,
+    mod:   `<span style="color:var(--orange)">→</span> Moderate: ${fp(z.mod[0])}–${fp(z.mod[1])}${ul}`,
+    tempo: `<span style="color:var(--red)">→</span> Tempo: ${fp(z.tempo[0])}–${fp(z.tempo[1])}${ul}`,
+    mix:   `<span style="color:var(--purple)">→</span> Easy: ${fp(z.easy[0])}–${fp(z.easy[1])}${ul} · Tempo: ${fp(z.tempo[0])}–${fp(z.tempo[1])}${ul}`,
+    race:  `<span style="color:var(--green)">→</span> Target: ${fp(z.race)}${ul}`
   };
   return map[pace] || '';
 }
 
 function paceLabel(p) {
   const z = calcPaceZones(getBenchmark5KSecs());
+  const ul = paceUnitLabel();
+  const fp = s => getUnits() === 'miles' ? fmtPace(Math.round(s / KM_TO_MILES)) : fmtPace(s);
   const map = {
-    easy:  `Easy — ${fmtPace(z.easy[0])}–${fmtPace(z.easy[1])}/km`,
-    mod:   `Moderate — ${fmtPace(z.mod[0])}–${fmtPace(z.mod[1])}/km`,
-    tempo: `Tempo — ${fmtPace(z.tempo[0])}–${fmtPace(z.tempo[1])}/km`,
+    easy:  `Easy — ${fp(z.easy[0])}–${fp(z.easy[1])}${ul}`,
+    mod:   `Moderate — ${fp(z.mod[0])}–${fp(z.mod[1])}${ul}`,
+    tempo: `Tempo — ${fp(z.tempo[0])}–${fp(z.tempo[1])}${ul}`,
     mix:   'Mixed efforts',
     race:  'Race effort — go for it'
   };
@@ -954,7 +1025,9 @@ function toggleComplete(key, card, weekNum) {
     card.classList.add('completed');
     card.querySelector('.session-check').textContent = '✓';
     showToast('Session complete! 💪');
-    const weekKeys = PROGRAM.find(w => w.week === weekNum).sessions.map((_,i) => `${weekNum}-${i}`);
+    const foundWeek = PROGRAM.find(w => w.week === weekNum);
+    if (!foundWeek) { S.saveCompleted(completed); renderHome(); return; }
+    const weekKeys = foundWeek.sessions.map((_,i) => `${weekNum}-${i}`);
     const allDone = weekKeys.every(k => completed.includes(k));
     if (allDone && !S.weekRatings()[weekNum]) {
       setTimeout(() => openWeekReview(weekNum), 800);
@@ -1000,12 +1073,13 @@ function openWeekReview(weekNum) {
   document.getElementById('review-modal').classList.add('open');
 }
 
-function closeReview(e) { if (e.target === e.currentTarget) document.getElementById('review-modal').classList.remove('open'); }
+function closeReviewDirect() { document.getElementById('review-modal').classList.remove('open'); }
+function closeReview(e) { if (e.target === e.currentTarget) closeReviewDirect(); }
 
 function saveWeekRating(rating) {
   if (!pendingWeekReview) return;
   S.saveRating(pendingWeekReview, rating);
-  document.getElementById('review-modal').classList.remove('open');
+  closeReviewDirect();
   const labels = { too_easy: 'Next week stepped up!', about_right: 'On track — keep going!', too_hard: 'Next week eased off a bit.' };
   showToast(labels[rating]);
   renderProgram();
@@ -1017,6 +1091,8 @@ function saveWeekRating(rating) {
 // LOG A RUN
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
+  const unitsBtn = document.getElementById('units-toggle-btn');
+  if (unitsBtn) unitsBtn.textContent = getUnits() === 'miles' ? 'mi' : 'km';
   document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
   const savedMaxHR = S.get('maxHR');
   if (savedMaxHR) document.getElementById('max-hr-setting').value = savedMaxHR;
@@ -1035,30 +1111,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function calcPaceStr(dist, timeStr) {
   if (!dist || !timeStr) return '';
-  const parts = timeStr.split(':');
-  if (parts.length < 2) return '';
-  let secs = 0;
-  if (parts.length === 3) secs = parseInt(parts[0])*3600 + parseInt(parts[1])*60 + parseInt(parts[2]);
-  else secs = parseInt(parts[0])*60 + parseInt(parts[1]);
+  const secs = timeStringToSeconds(timeStr);
   if (!secs || !parseFloat(dist)) return '';
   const ps = secs / parseFloat(dist);
   return `${Math.floor(ps/60)}:${Math.round(ps%60).toString().padStart(2,'0')}`;
 }
 
+let editingRunId = null;
+
 function saveRun() {
   const date = document.getElementById('log-date').value;
   const dist = document.getElementById('log-dist').value;
   const time = document.getElementById('log-time').value;
-  if (!date || !dist || !time) { showToast('Fill in date, distance & time'); return; }
+  const hr   = document.getElementById('log-hr').value;
+  const cal  = document.getElementById('log-cal').value;
+  const rpe  = parseInt(document.getElementById('log-rpe').value);
+
+  const errors = [];
+  if (!date) {
+    errors.push('Date is required.');
+  } else if (new Date(date + 'T00:00:00') > new Date()) {
+    errors.push('Date cannot be in the future.');
+  }
+  const distVal = parseFloat(dist);
+  if (!dist) {
+    errors.push('Distance is required.');
+  } else if (isNaN(distVal) || distVal < 0.1 || distVal > 100) {
+    errors.push('Distance must be between 0.1 and 100 km.');
+  }
+  if (!time) {
+    errors.push('Duration is required.');
+  } else if (!isValidTimeString(time)) {
+    errors.push('Duration must be in MM:SS or H:MM:SS format (e.g. 28:30 or 1:02:45).');
+  }
+  if (hr) {
+    const hrVal = parseInt(hr);
+    if (isNaN(hrVal) || hrVal < 40 || hrVal > 230) errors.push('Heart rate must be between 40 and 230 bpm.');
+  }
+  if (cal) {
+    const calVal = parseInt(cal);
+    if (isNaN(calVal) || calVal < 1 || calVal > 5000) errors.push('Calories must be between 1 and 5000.');
+  }
+  if (rpe < 1 || rpe > 10) errors.push('RPE must be between 1 and 10.');
+
+  const errBox = document.getElementById('form-errors');
+  if (errors.length) {
+    errBox.innerHTML = errors.map(e => '• ' + e).join('<br>');
+    errBox.style.display = 'block';
+    errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    return;
+  }
+  errBox.style.display = 'none';
 
   // Find next session before marking complete
   const nextSess = getNextSession();
 
   // Parse raw time to seconds
-  const tp = time.split(':');
-  const rawSecs = tp.length === 3
-    ? parseInt(tp[0])*3600 + parseInt(tp[1])*60 + parseInt(tp[2])
-    : parseInt(tp[0])*60 + parseInt(tp[1]);
+  const rawSecs = timeStringToSeconds(time);
 
   // Walk deduction from program session description
   let walkMins = 0;
@@ -1067,7 +1176,6 @@ function saveRun() {
     walkMins = parseWalkMins(getSessionDesc(nextSess.session, diff));
   }
   const netSecs = Math.max(rawSecs - walkMins * 60, 0);
-  const distVal = parseFloat(dist);
   const pace = (netSecs > 0 && distVal > 0)
     ? `${Math.floor((netSecs/distVal)/60)}:${Math.round((netSecs/distVal)%60).toString().padStart(2,'0')}`
     : calcPaceStr(dist, time);
@@ -1075,21 +1183,39 @@ function saveRun() {
   const run = {
     id: Date.now(), date, dist: distVal, time, pace,
     walkDeducted: walkMins,
-    hr: document.getElementById('log-hr').value ? parseInt(document.getElementById('log-hr').value) : null,
-    cal: document.getElementById('log-cal').value ? parseInt(document.getElementById('log-cal').value) : null,
+    hr: hr ? parseInt(hr) : null,
+    cal: cal ? parseInt(cal) : null,
     type: document.getElementById('log-type').value,
-    rpe: parseInt(document.getElementById('log-rpe').value),
+    rpe: rpe,
     notes: document.getElementById('log-notes').value
   };
 
   // Attach GPX data if present
+  const hadNewGpx = !!window._pendingGpxData;
   if (window._pendingGpxData) {
     Object.assign(run, window._pendingGpxData);
     window._pendingGpxData = null;
   }
 
   const runs = S.runs();
-  runs.unshift(run);
+  if (editingRunId !== null) {
+    const idx = runs.findIndex(r => r.id === editingRunId);
+    if (idx > -1) {
+      const original = runs[idx];
+      run.id = original.id;
+      if (!hadNewGpx) {
+        ['splits','hrZones','avgCadence','maxCadence','source'].forEach(k => {
+          if (original[k] !== undefined) run[k] = original[k];
+        });
+      }
+      runs[idx] = run;
+    }
+    editingRunId = null;
+    document.getElementById('save-run-btn').textContent = 'SAVE RUN';
+    document.getElementById('cancel-edit-btn').style.display = 'none';
+  } else {
+    runs.unshift(run);
+  }
   S.saveRuns(runs);
 
   // Auto-mark next session complete
@@ -1122,7 +1248,37 @@ function clearForm() {
   document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('gpx-status').style.display = 'none';
   document.getElementById('gpx-file').value = '';
+  document.getElementById('form-errors').style.display = 'none';
   window._pendingGpxData = null;
+  editingRunId = null;
+  document.getElementById('save-run-btn').textContent = 'SAVE RUN';
+  document.getElementById('cancel-edit-btn').style.display = 'none';
+}
+
+function editRun(id) {
+  const run = S.runs().find(r => r.id === id);
+  if (!run) return;
+  editingRunId = id;
+  const logBtn = document.querySelector('.nav-btn:nth-child(3)');
+  switchScreen('log', logBtn);
+  document.getElementById('log-date').value = run.date;
+  document.getElementById('log-dist').value = run.dist;
+  document.getElementById('log-time').value = run.time;
+  document.getElementById('log-hr').value = run.hr || '';
+  document.getElementById('log-cal').value = run.cal || '';
+  document.getElementById('log-type').value = run.type || '';
+  document.getElementById('log-rpe').value = run.rpe || 5;
+  document.getElementById('rpe-display').textContent = run.rpe || 5;
+  document.getElementById('log-notes').value = run.notes || '';
+  document.getElementById('log-pace').value = run.pace || '';
+  document.getElementById('form-errors').style.display = 'none';
+  document.getElementById('save-run-btn').textContent = 'UPDATE RUN';
+  document.getElementById('cancel-edit-btn').style.display = 'block';
+}
+
+function cancelEdit() {
+  editingRunId = null;
+  clearForm();
 }
 
 // ============================================================
@@ -1138,30 +1294,54 @@ function renderStats() {
   document.getElementById('ws-runs').textContent = thisWeek.length;
   const cw = Math.min(12, Math.floor(S.completed().length / 3) + 1);
   document.getElementById('ws-planned').textContent = PROGRAM[cw-1]?.sessions.length || 3;
-  document.getElementById('ws-km').textContent = thisWeek.reduce((s,r) => s+(r.dist||0), 0).toFixed(1);
+  const wkKm = thisWeek.reduce((s,r) => s+(r.dist||0), 0);
+  document.getElementById('ws-km').textContent = getUnits() === 'miles' ? (wkKm * KM_TO_MILES).toFixed(1) : wkKm.toFixed(1);
+  const wsKmLabel = document.getElementById('ws-km-label');
+  if (wsKmLabel) wsKmLabel.textContent = getUnits() === 'miles' ? 'Miles This Week' : 'KM This Week';
   const rpes = thisWeek.filter(r => r.rpe).map(r => r.rpe);
   document.getElementById('ws-rpe').textContent = rpes.length ? (rpes.reduce((a,b)=>a+b,0)/rpes.length).toFixed(1) : '—';
 
-  const totalSecs = thisWeek.reduce((s,r) => {
-    if (!r.time) return s;
-    const p = r.time.split(':');
-    return s + (p.length===2 ? parseInt(p[0])*60+parseInt(p[1]) : parseInt(p[0])*3600+parseInt(p[1])*60+parseInt(p[2]));
-  }, 0);
+  const totalSecs = thisWeek.reduce((s,r) => s + timeStringToSeconds(r.time), 0);
   const totalKm = thisWeek.reduce((s,r) => s+(r.dist||0), 0);
   if (totalKm > 0) {
-    const ps = totalSecs / totalKm;
+    let ps = totalSecs / totalKm;
+    if (getUnits() === 'miles') ps = ps / KM_TO_MILES;
     document.getElementById('ws-pace').textContent = `${Math.floor(ps/60)}:${Math.round(ps%60).toString().padStart(2,'0')}`;
   } else { document.getElementById('ws-pace').textContent = '—'; }
 
+  const isMiles = getUnits() === 'miles';
+  const paceLabel = document.getElementById('ws-pace-label');
+  if (paceLabel) paceLabel.textContent = isMiles ? 'per mile' : 'per kilometre';
+  const atKmLabel = document.getElementById('at-km-label');
+  if (atKmLabel) atKmLabel.textContent = isMiles ? 'Total Miles' : 'Total KM';
   document.getElementById('at-runs').textContent = runs.length;
-  document.getElementById('at-km').textContent = runs.reduce((s,r)=>s+(r.dist||0),0).toFixed(1);
+  const atKm = runs.reduce((s,r)=>s+(r.dist||0),0);
+  document.getElementById('at-km').textContent = isMiles ? (atKm * KM_TO_MILES).toFixed(1) : atKm.toFixed(1);
   const allRpes = runs.filter(r=>r.rpe).map(r=>r.rpe);
   document.getElementById('at-rpe').textContent = allRpes.length ? (allRpes.reduce((a,b)=>a+b,0)/allRpes.length).toFixed(1) : '—';
   document.getElementById('at-sessions').textContent = S.completed().length;
 
   const hist = document.getElementById('history-list-stats');
-  hist.innerHTML = '<div style="padding:0 16px 8px;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-top:8px">Run Log</div>';
-  if (!runs.length) { hist.innerHTML += `<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No runs yet.</div></div>`; return; }
+  hist.innerHTML = `<div style="padding:0 16px 8px;display:flex;align-items:baseline;gap:8px;margin-top:8px">
+    <div style="font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted)">Run Log</div>
+    <div style="font-size:10px;color:var(--muted2)">(${runs.length} stored)</div>
+  </div>`;
+
+  // Export / Import row
+  const ioRow = document.createElement('div');
+  ioRow.style.cssText = 'display:flex;gap:8px;margin:0 16px 8px';
+  ioRow.innerHTML = `
+    <button class="btn-secondary" style="flex:1;margin-top:0" onclick="exportRuns()">Export Backup</button>
+    <label class="btn-secondary" style="flex:1;margin-top:0;text-align:center;cursor:pointer">
+      Import Backup
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importRuns(this)">
+    </label>`;
+  hist.appendChild(ioRow);
+
+  if (!runs.length) { const empty = document.createElement('div'); empty.className = 'empty'; empty.innerHTML = '<div class="empty-icon">📋</div><div class="empty-text">No runs yet.</div>'; hist.appendChild(empty); renderCharts(); return; }
+
+  let openSwipeWrapper = null;
+
   runs.slice(0, 20).forEach((r, ri) => {
     const d = new Date(r.date + 'T12:00:00');
     const rpeColor = r.rpe >= 8 ? 'var(--red)' : r.rpe >= 5 ? 'var(--orange)' : 'var(--green)';
@@ -1186,28 +1366,81 @@ function renderStats() {
       extrasHtml += `<span class="cadence-badge" style="margin-top:6px">${r.avgCadence} spm avg · ${r.maxCadence} spm max</span>`;
     }
 
-    const item = document.createElement('div');
-    item.className = 'run-item';
-    item.style.flexDirection = 'column';
-    item.style.alignItems = 'stretch';
     const extrasId = `extras-${ri}`;
-    item.innerHTML = `
+
+    // Swipe wrapper
+    const wrapper = document.createElement('div');
+    wrapper.className = 'run-swipe-wrapper';
+
+    // Action panel (revealed on swipe)
+    const actions = document.createElement('div');
+    actions.className = 'run-actions';
+    actions.innerHTML = `
+      <button class="run-action-btn run-action-edit" onclick="editRun(${r.id})"><span>✏️</span>Edit</button>
+      <button class="run-action-btn run-action-delete" onclick="deleteRun(${r.id})"><span>🗑</span>Delete</button>`;
+
+    // Card content
+    const content = document.createElement('div');
+    content.className = 'run-swipe-content';
+    content.innerHTML = `
       <div style="display:flex;align-items:center;gap:12px">
         <div class="run-date-box"><div class="run-date-day">${d.getDate()}</div><div class="run-date-month">${d.toLocaleString('default',{month:'short'}).toUpperCase()}</div></div>
         <div class="run-divider"></div>
         <div class="run-stats">
-          <div class="run-main">${gpxBadge}${r.dist} km · ${r.time}</div>
+          <div class="run-main">${gpxBadge}${displayDist(r.dist)} · ${r.time}</div>
           <div class="run-sub">${r.type ? r.type.charAt(0).toUpperCase()+r.type.slice(1) : 'Run'}${r.hr?' · ❤️ '+r.hr:''}${r.cal?' · 🔥 '+r.cal+' kcal':''}</div>
           ${walkNote}
           ${r.rpe?`<span class="rpe-badge" style="background:rgba(30,26,22,0.08);border:1px solid ${rpeColor};color:${rpeColor}">RPE ${r.rpe}</span>`:''}
           ${r.notes?`<div class="run-sub" style="margin-top:3px;font-style:italic;font-size:11px">"${r.notes.slice(0,70)}${r.notes.length>70?'…':''}"</div>`:''}
           ${extrasHtml ? `<div class="run-expand-btn" onclick="document.getElementById('${extrasId}').classList.toggle('open');this.textContent=document.getElementById('${extrasId}').classList.contains('open')?'▲ Hide details':'▼ Show details'">▼ Show details</div>` : ''}
         </div>
-        <div><div class="run-pace-badge">${r.pace||'—'}</div><div class="run-pace-label">/km</div></div>
+        <div><div class="run-pace-badge">${r.pace||'—'}</div><div class="run-pace-label">${paceUnitLabel()}</div></div>
       </div>
       ${extrasHtml ? `<div class="run-extras" id="${extrasId}">${extrasHtml}</div>` : ''}`;
-    hist.appendChild(item);
+
+    // Swipe gesture
+    let startX = 0, currentX = 0, isSwiping = false;
+    const SNAP = 128;
+    content.addEventListener('touchstart', e => {
+      startX = e.touches[0].clientX;
+      isSwiping = true;
+    }, { passive: true });
+    content.addEventListener('touchmove', e => {
+      if (!isSwiping) return;
+      const dx = Math.max(-SNAP, Math.min(0, e.touches[0].clientX - startX));
+      currentX = dx;
+      content.style.transition = 'none';
+      content.style.transform = `translateX(${dx}px)`;
+    }, { passive: true });
+    content.addEventListener('touchend', () => {
+      isSwiping = false;
+      content.style.transition = '';
+      if (currentX < -SNAP / 2) {
+        if (openSwipeWrapper && openSwipeWrapper !== wrapper) {
+          openSwipeWrapper.querySelector('.run-swipe-content').style.transform = '';
+        }
+        content.style.transform = `translateX(-${SNAP}px)`;
+        openSwipeWrapper = wrapper;
+      } else {
+        content.style.transform = '';
+        openSwipeWrapper = null;
+      }
+      currentX = 0;
+    });
+
+    wrapper.appendChild(actions);
+    wrapper.appendChild(content);
+    hist.appendChild(wrapper);
   });
+
+  // Close open swipe on scroll/tap elsewhere
+  hist.addEventListener('touchstart', e => {
+    if (openSwipeWrapper && !openSwipeWrapper.contains(e.target)) {
+      openSwipeWrapper.querySelector('.run-swipe-content').style.transform = '';
+      openSwipeWrapper = null;
+    }
+  }, { passive: true });
+
   if (runs.length) {
     const clearBtn = document.createElement('button');
     clearBtn.className = 'btn-secondary';
@@ -1223,7 +1456,6 @@ function renderStats() {
 // SPEED CONVERTER
 // ============================================================
 function convertSpeeds(sourceId) {
-  const fmtPaceStr = s => `${Math.floor(s/60)}:${Math.round(s%60).toString().padStart(2,'0')}`;
   const parseMinSec = v => { const m = v.match(/^(\d+):(\d{1,2})$/); return m ? parseInt(m[1])*60+parseInt(m[2]) : null; };
 
   let kmh = null;
@@ -1234,27 +1466,27 @@ function convertSpeeds(sourceId) {
     if (s) kmh = 3600 / s;
   } else if (sourceId === 'conv-mph') {
     const mph = parseFloat(document.getElementById('conv-mph').value);
-    if (!isNaN(mph) && mph > 0) kmh = mph / 0.621371;
+    if (!isNaN(mph) && mph > 0) kmh = mph / KM_TO_MILES;
   } else if (sourceId === 'conv-minmi') {
     const s = parseMinSec(document.getElementById('conv-minmi').value);
-    if (s) kmh = (3600 / s) * 0.621371;
+    if (s) kmh = (3600 / s) * KM_TO_MILES;
   }
 
   if (!kmh || kmh <= 0 || !isFinite(kmh)) return;
 
   const secsPerKm = 3600 / kmh;
-  const mph = kmh * 0.621371;
-  const secsPerMile = secsPerKm / 0.621371;
+  const mph = kmh * KM_TO_MILES;
+  const secsPerMile = secsPerKm / KM_TO_MILES;
 
   if (sourceId !== 'conv-kmh') document.getElementById('conv-kmh').value = kmh.toFixed(2);
-  if (sourceId !== 'conv-minkm') document.getElementById('conv-minkm').value = fmtPaceStr(secsPerKm);
+  if (sourceId !== 'conv-minkm') document.getElementById('conv-minkm').value = fmtPace(secsPerKm);
   if (sourceId !== 'conv-mph') document.getElementById('conv-mph').value = mph.toFixed(2);
-  if (sourceId !== 'conv-minmi') document.getElementById('conv-minmi').value = fmtPaceStr(secsPerMile);
+  if (sourceId !== 'conv-minmi') document.getElementById('conv-minmi').value = fmtPace(secsPerMile);
 
   document.getElementById('res-kmh').textContent = kmh.toFixed(2);
-  document.getElementById('res-minkm').textContent = fmtPaceStr(secsPerKm);
+  document.getElementById('res-minkm').textContent = fmtPace(secsPerKm);
   document.getElementById('res-mph').textContent = mph.toFixed(2);
-  document.getElementById('res-minmi').textContent = fmtPaceStr(secsPerMile);
+  document.getElementById('res-minmi').textContent = fmtPace(secsPerMile);
   document.getElementById('conv-result-panel').style.display = 'block';
 }
 
@@ -1266,10 +1498,7 @@ function getBenchmark5KSecs() {
   const races = runs.filter(r => r.type === 'race' && r.dist >= 4.8 && r.dist <= 5.2 && r.time);
   let best = Infinity;
   races.forEach(r => {
-    const p = r.time.split(':');
-    const s = p.length === 3
-      ? parseInt(p[0])*3600 + parseInt(p[1])*60 + parseInt(p[2])
-      : parseInt(p[0])*60 + parseInt(p[1]);
+    const s = timeStringToSeconds(r.time);
     if (s > 0 && s < best) best = s;
   });
   return best === Infinity ? 1800 : best;
@@ -1278,9 +1507,9 @@ function getBenchmark5KSecs() {
 function calcPaceZones(fiveKSecs) {
   const rp = fiveKSecs / 5;
   return {
-    easy:  [Math.round(rp * 1.208), Math.round(rp * 1.333)],
-    mod:   [Math.round(rp * 1.042), Math.round(rp * 1.125)],
-    tempo: [Math.round(rp * 0.917), Math.round(rp * 1.000)],
+    easy:  [Math.round(rp * PACE_EASY_LO),  Math.round(rp * PACE_EASY_HI)],
+    mod:   [Math.round(rp * PACE_MOD_LO),   Math.round(rp * PACE_MOD_HI)],
+    tempo: [Math.round(rp * PACE_TEMPO_LO), Math.round(rp * PACE_TEMPO_HI)],
     race:  Math.round(rp)
   };
 }
@@ -1298,12 +1527,14 @@ function renderPaceZonesCard() {
   const benchLabel = isDefault
     ? '~30:00 (log a 5K race to update)'
     : `${fmtPace(fiveK)} — your best 5K`;
+  const ul = paceUnitLabel();
+  const fp = s => getUnits() === 'miles' ? fmtPace(Math.round(s / KM_TO_MILES)) : fmtPace(s);
   el.innerHTML = `
     <div class="card-label">Pace Zones — 5K: ${benchLabel}</div>
-    <div class="pace-zone-row"><span style="color:var(--accent);font-weight:500">🟡 Easy</span><span style="color:var(--muted)">${fmtPace(z.easy[0])} – ${fmtPace(z.easy[1])} /km</span></div>
-    <div class="pace-zone-row"><span style="color:var(--orange);font-weight:500">🟠 Moderate</span><span style="color:var(--muted)">${fmtPace(z.mod[0])} – ${fmtPace(z.mod[1])} /km</span></div>
-    <div class="pace-zone-row"><span style="color:var(--red);font-weight:500">🔴 Tempo</span><span style="color:var(--muted)">${fmtPace(z.tempo[0])} – ${fmtPace(z.tempo[1])} /km</span></div>
-    <div class="pace-zone-row"><span style="color:var(--green);font-weight:500">🟢 Race Effort</span><span style="color:var(--muted)">${fmtPace(z.race)} /km target</span></div>`;
+    <div class="pace-zone-row"><span style="color:var(--accent);font-weight:500">🟡 Easy</span><span style="color:var(--muted)">${fp(z.easy[0])} – ${fp(z.easy[1])} ${ul}</span></div>
+    <div class="pace-zone-row"><span style="color:var(--orange);font-weight:500">🟠 Moderate</span><span style="color:var(--muted)">${fp(z.mod[0])} – ${fp(z.mod[1])} ${ul}</span></div>
+    <div class="pace-zone-row"><span style="color:var(--red);font-weight:500">🔴 Tempo</span><span style="color:var(--muted)">${fp(z.tempo[0])} – ${fp(z.tempo[1])} ${ul}</span></div>
+    <div class="pace-zone-row"><span style="color:var(--green);font-weight:500">🟢 Race Effort</span><span style="color:var(--muted)">${fp(z.race)} ${ul} target</span></div>`;
 }
 
 function renderCalcTargets() { /* removed */ }
@@ -1313,7 +1544,7 @@ function renderCalcTargets() { /* removed */ }
 // ============================================================
 function showCelebration(run, completedSession) {
   const totalSessions = S.completed().length;
-  const pct = Math.min(100, (totalSessions / 36) * 100).toFixed(0);
+  const pct = Math.min(100, (totalSessions / TOTAL_SESSIONS) * 100).toFixed(0);
   const walkNote = run.walkDeducted > 0
     ? `<div style="font-size:11px;color:var(--muted);margin:8px 0;padding:8px;background:rgba(255,255,255,0.03);border-left:2px solid var(--muted2)">${run.walkDeducted} min warm-up/cool-down walk deducted from pace</div>`
     : '';
@@ -1325,9 +1556,9 @@ function showCelebration(run, completedSession) {
     </div>`;
   }
   document.getElementById('celebrate-body').innerHTML = `
-    <div class="cel-stat"><span class="cel-label">Distance</span><span class="cel-val">${run.dist} km</span></div>
+    <div class="cel-stat"><span class="cel-label">Distance</span><span class="cel-val">${displayDist(run.dist)}</span></div>
     <div class="cel-stat"><span class="cel-label">Time</span><span class="cel-val">${run.time}</span></div>
-    <div class="cel-stat"><span class="cel-label">Net Pace</span><span class="cel-val">${run.pace||'—'} /km</span></div>
+    <div class="cel-stat"><span class="cel-label">Net Pace</span><span class="cel-val">${run.pace ? displayPace(run.pace) : '—'}</span></div>
     ${walkNote}${sessionBadge}
     <div style="margin-top:10px">
       <div style="display:flex;justify-content:space-between;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">
@@ -1366,7 +1597,10 @@ function renderCharts() {
   });
   const wKeys = Object.keys(weekMap).sort().slice(-8);
   const wLabels = wKeys.map(k => { const d = new Date(k+'T12:00:00'); return `${d.getDate()}/${d.getMonth()+1}`; });
-  const wVals = wKeys.map(k => +weekMap[k].toFixed(1));
+  const wValsKm = wKeys.map(k => weekMap[k]);
+  const wVals = getUnits() === 'miles'
+    ? wValsKm.map(v => +(v * KM_TO_MILES).toFixed(2))
+    : wValsKm.map(v => +v.toFixed(1));
   if (_charts.weekly) _charts.weekly.destroy();
   _charts.weekly = new Chart(document.getElementById('chart-weekly-dist').getContext('2d'), {
     type: 'bar',
@@ -1376,7 +1610,10 @@ function renderCharts() {
 
   // Pace trend
   const pRuns = runs.filter(r => r.pace).slice(-20);
-  const pSecs = pRuns.map(r => { const p = r.pace.split(':'); return parseInt(p[0])*60+parseInt(p[1]); });
+  const pSecs = pRuns.map(r => {
+    const s = timeStringToSeconds(r.pace);
+    return getUnits() === 'miles' ? Math.round(s / KM_TO_MILES) : s;
+  });
   const pLabels = pRuns.map(r => { const d = new Date(r.date+'T12:00:00'); return `${d.getDate()}/${d.getMonth()+1}`; });
   if (_charts.pace) _charts.pace.destroy();
   _charts.pace = new Chart(document.getElementById('chart-pace-trend').getContext('2d'), {
@@ -1459,7 +1696,7 @@ function parseGPX(input) {
             ? new Date(points[i-1].time.getTime() + (points[i].time - points[i-1].time)*frac)
             : points[i].time;
           const splitSecs = (splitStartTime && splitEnd) ? Math.round((splitEnd - splitStartTime)/1000) : 0;
-          if (splitSecs > 0) splits.push({ km: kmCount, pace: `${Math.floor(splitSecs/60)}:${Math.round(splitSecs%60).toString().padStart(2,'0')}` });
+          if (splitSecs > 0) splits.push({ km: kmCount, pace: fmtPace(splitSecs) });
           splitStartTime = splitEnd;
           kmCount++;
         }
@@ -1470,15 +1707,15 @@ function parseGPX(input) {
       let avgHR = null, hrZones = null;
       if (hrPts.length) {
         avgHR = Math.round(hrPts.reduce((s,p) => s+p.hr, 0) / hrPts.length);
-        const maxHR = parseInt(S.get('maxHR') || 190);
+        const maxHR = parseInt(S.get('maxHR') || DEFAULT_MAX_HR);
         const secPerPt = totalSecs / points.length;
         hrZones = {z1:0,z2:0,z3:0,z4:0,z5:0};
         hrPts.forEach(p => {
           const pct = p.hr / maxHR;
-          if (pct < 0.60) hrZones.z1 += secPerPt;
-          else if (pct < 0.70) hrZones.z2 += secPerPt;
-          else if (pct < 0.80) hrZones.z3 += secPerPt;
-          else if (pct < 0.90) hrZones.z4 += secPerPt;
+          if (pct < HR_Z1_MAX) hrZones.z1 += secPerPt;
+          else if (pct < HR_Z2_MAX) hrZones.z2 += secPerPt;
+          else if (pct < HR_Z3_MAX) hrZones.z3 += secPerPt;
+          else if (pct < HR_Z4_MAX) hrZones.z4 += secPerPt;
           else hrZones.z5 += secPerPt;
         });
         Object.keys(hrZones).forEach(k => hrZones[k] = Math.round(hrZones[k]));
@@ -1487,7 +1724,7 @@ function parseGPX(input) {
       // Cadence
       const cadPts = points.filter(p => p.cad);
       const avgCadence = cadPts.length ? Math.round(cadPts.reduce((s,p)=>s+p.cad,0)/cadPts.length) : null;
-      const maxCadence = cadPts.length ? Math.max(...cadPts.map(p=>p.cad)) : null;
+      const maxCadence = cadPts.length ? cadPts.reduce((max, p) => p.cad > max ? p.cad : max, cadPts[0].cad) : null;
 
       // Format time
       const timeStr = totalSecs >= 3600
@@ -1572,6 +1809,69 @@ function dismissInstall() {
   S.set('installDismissed', true);
   const card = document.getElementById('install-card');
   if (card) card.style.display = 'none';
+}
+
+// ============================================================
+// DATA SAFETY — EXPORT / IMPORT / DELETE
+// ============================================================
+function exportRuns() {
+  const runs = S.runs();
+  if (!runs.length) { showToast('No runs to export'); return; }
+  const blob = new Blob([JSON.stringify(runs, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `runs-backup-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Backup downloaded!');
+}
+
+function importRuns(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data)) throw new Error('Root must be an array');
+      const valid = data.every(r =>
+        r && typeof r === 'object' &&
+        typeof r.date === 'string' &&
+        (typeof r.dist === 'number' || typeof r.dist === 'string') &&
+        typeof r.time === 'string'
+      );
+      if (!valid) throw new Error('Invalid run format');
+      if (!confirm(`Import ${data.length} run${data.length !== 1 ? 's' : ''}? This will replace your current runs.`)) { input.value = ''; return; }
+      S.saveRuns(data);
+      renderStats();
+      renderHome();
+      showToast(`${data.length} runs imported!`);
+    } catch (err) {
+      showToast('Invalid backup file');
+      console.error(err);
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function deleteRun(id) {
+  if (!confirm('Delete this run?')) return;
+  S.saveRuns(S.runs().filter(r => r.id !== id));
+  renderStats();
+  renderHome();
+}
+
+// ============================================================
+// UNITS TOGGLE
+// ============================================================
+function toggleUnits() {
+  const next = getUnits() === 'km' ? 'miles' : 'km';
+  S.set('units', next);
+  const btn = document.getElementById('units-toggle-btn');
+  if (btn) btn.textContent = next === 'miles' ? 'mi' : 'km';
+  renderHome();
+  renderStats();
 }
 
 // ============================================================
