@@ -733,11 +733,6 @@ function getSessionDesc(s, diff) {
   return s.desc;
 }
 
-function parseWalkMins(desc) {
-  const warmup = desc.match(/^(\d+)\s*min\s*walk/i);
-  const cooldown = desc.match(/·\s*(\d+)\s*min\s*walk(?:\s*cool[\s-]?down)?\.?\s*$/i);
-  return (warmup ? parseInt(warmup[1]) : 0) + (cooldown ? parseInt(cooldown[1]) : 0);
-}
 
 function getNextSession() {
   const completed = S.completed();
@@ -756,12 +751,10 @@ function renderNextSessionBanner() {
   if (!next) { banner.style.display = 'none'; return; }
   const diff = getWeekDiff(next.week.week);
   const desc = getSessionDesc(next.session, diff);
-  const walkMins = parseWalkMins(desc);
   banner.style.display = 'block';
   document.getElementById('next-session-info').innerHTML = `
     <div style="font-family:'Fraunces',serif;font-size:17px;letter-spacing:1px;margin-bottom:4px">W${next.week.week} · ${next.session.name}</div>
-    <div style="font-size:12px;color:var(--muted);line-height:1.5">${desc}</div>
-    ${walkMins > 0 ? `<div style="font-size:10px;color:var(--muted2);margin-top:6px;letter-spacing:0.5px">${walkMins} min walk will be deducted from net pace</div>` : ''}`;
+    <div style="font-size:12px;color:var(--muted);line-height:1.5">${desc}</div>`;
 }
 
 // ============================================================
@@ -1016,7 +1009,21 @@ function saveWeekRating(rating) {
 // ============================================================
 // LOG A RUN
 // ============================================================
+function migrateWalkDeductedRuns() {
+  const runs = S.runs();
+  let changed = false;
+  runs.forEach(r => {
+    if (r.walkDeducted > 0) {
+      r.pace = calcPaceStr(r.dist, r.time);
+      delete r.walkDeducted;
+      changed = true;
+    }
+  });
+  if (changed) S.saveRuns(runs);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  migrateWalkDeductedRuns();
   document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
   const savedMaxHR = S.get('maxHR');
   if (savedMaxHR) document.getElementById('max-hr-setting').value = savedMaxHR;
@@ -1060,21 +1067,11 @@ function saveRun() {
     ? parseInt(tp[0])*3600 + parseInt(tp[1])*60 + parseInt(tp[2])
     : parseInt(tp[0])*60 + parseInt(tp[1]);
 
-  // Walk deduction from program session description
-  let walkMins = 0;
-  if (nextSess) {
-    const diff = getWeekDiff(nextSess.week.week);
-    walkMins = parseWalkMins(getSessionDesc(nextSess.session, diff));
-  }
-  const netSecs = Math.max(rawSecs - walkMins * 60, 0);
   const distVal = parseFloat(dist);
-  const pace = (netSecs > 0 && distVal > 0)
-    ? `${Math.floor((netSecs/distVal)/60)}:${Math.round((netSecs/distVal)%60).toString().padStart(2,'0')}`
-    : calcPaceStr(dist, time);
+  const pace = calcPaceStr(dist, time);
 
   const run = {
     id: Date.now(), date, dist: distVal, time, pace,
-    walkDeducted: walkMins,
     hr: document.getElementById('log-hr').value ? parseInt(document.getElementById('log-hr').value) : null,
     cal: document.getElementById('log-cal').value ? parseInt(document.getElementById('log-cal').value) : null,
     type: document.getElementById('log-type').value,
@@ -1165,7 +1162,6 @@ function renderStats() {
   runs.slice(0, 20).forEach((r, ri) => {
     const d = new Date(r.date + 'T12:00:00');
     const rpeColor = r.rpe >= 8 ? 'var(--red)' : r.rpe >= 5 ? 'var(--orange)' : 'var(--green)';
-    const walkNote = r.walkDeducted > 0 ? `<div class="run-sub" style="color:var(--muted2)">${r.walkDeducted}min walk deducted</div>` : '';
     const gpxBadge = r.source === 'gpx' ? `<span style="font-size:9px;padding:1px 5px;background:rgba(123,108,186,0.15);border:1px solid rgba(123,108,186,0.3);color:var(--purple);letter-spacing:1px">GPS</span> ` : '';
 
     // Build GPX extras
@@ -1198,7 +1194,6 @@ function renderStats() {
         <div class="run-stats">
           <div class="run-main">${gpxBadge}${r.dist} km · ${r.time}</div>
           <div class="run-sub">${r.type ? r.type.charAt(0).toUpperCase()+r.type.slice(1) : 'Run'}${r.hr?' · ❤️ '+r.hr:''}${r.cal?' · 🔥 '+r.cal+' kcal':''}</div>
-          ${walkNote}
           ${r.rpe?`<span class="rpe-badge" style="background:rgba(30,26,22,0.08);border:1px solid ${rpeColor};color:${rpeColor}">RPE ${r.rpe}</span>`:''}
           ${r.notes?`<div class="run-sub" style="margin-top:3px;font-style:italic;font-size:11px">"${r.notes.slice(0,70)}${r.notes.length>70?'…':''}"</div>`:''}
           ${extrasHtml ? `<div class="run-expand-btn" onclick="document.getElementById('${extrasId}').classList.toggle('open');this.textContent=document.getElementById('${extrasId}').classList.contains('open')?'▲ Hide details':'▼ Show details'">▼ Show details</div>` : ''}
@@ -1314,9 +1309,6 @@ function renderCalcTargets() { /* removed */ }
 function showCelebration(run, completedSession) {
   const totalSessions = S.completed().length;
   const pct = Math.min(100, (totalSessions / 36) * 100).toFixed(0);
-  const walkNote = run.walkDeducted > 0
-    ? `<div style="font-size:11px;color:var(--muted);margin:8px 0;padding:8px;background:rgba(255,255,255,0.03);border-left:2px solid var(--muted2)">${run.walkDeducted} min warm-up/cool-down walk deducted from pace</div>`
-    : '';
   let sessionBadge = '';
   if (completedSession) {
     sessionBadge = `<div class="cel-session-badge">
@@ -1327,8 +1319,8 @@ function showCelebration(run, completedSession) {
   document.getElementById('celebrate-body').innerHTML = `
     <div class="cel-stat"><span class="cel-label">Distance</span><span class="cel-val">${run.dist} km</span></div>
     <div class="cel-stat"><span class="cel-label">Time</span><span class="cel-val">${run.time}</span></div>
-    <div class="cel-stat"><span class="cel-label">Net Pace</span><span class="cel-val">${run.pace||'—'} /km</span></div>
-    ${walkNote}${sessionBadge}
+    <div class="cel-stat"><span class="cel-label">Pace</span><span class="cel-val">${run.pace||'—'} /km</span></div>
+    ${sessionBadge}
     <div style="margin-top:10px">
       <div style="display:flex;justify-content:space-between;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">
         <span>Program Progress</span><span>${totalSessions} / 36 sessions</span>
