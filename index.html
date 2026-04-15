@@ -202,12 +202,9 @@
   .chart-card { background:var(--card); border:1px solid var(--border); margin:0 16px 12px; padding:14px 14px 8px; border-radius:12px; }
   .chart-title { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; font-weight:600; }
 
-  /* IMAGE IMPORT */
-  .img-drop { border:2px dashed var(--border); padding:16px; text-align:center; cursor:pointer; color:var(--muted); font-size:13px; transition:all 0.2s; margin-bottom:10px; border-radius:8px; font-weight:500; }
-  .img-drop:hover { border-color:var(--accent); color:var(--accent); }
-  .img-drop.processing { border-color:var(--accent); color:var(--accent); animation:pulse-border 1.2s ease-in-out infinite; }
-  @keyframes pulse-border { 0%,100%{opacity:1} 50%{opacity:0.5} }
-  .img-preview { width:100%; max-height:180px; object-fit:cover; border-radius:8px; margin-top:8px; display:none; }
+  /* GPX IMPORT */
+  .gpx-drop { border:2px dashed var(--border); padding:16px; text-align:center; cursor:pointer; color:var(--muted); font-size:13px; transition:all 0.2s; margin-bottom:10px; border-radius:8px; font-weight:500; }
+  .gpx-drop:hover { border-color:var(--accent); color:var(--accent); }
   .gpx-status-msg { font-size:11px; color:var(--green); line-height:1.5; margin-top:4px; }
   .next-session-banner { background:rgba(232,160,40,0.08); border:1px solid rgba(232,160,40,0.25); margin:0 16px 12px; padding:14px; border-radius:12px; }
 
@@ -302,13 +299,12 @@
 
   <div class="card">
     <div class="form-group">
-      <label class="form-label">Import from Screenshot (optional)</label>
-      <div class="img-drop" id="img-drop" onclick="document.getElementById('run-img-file').click()">
-        📸 Upload Strava or Garmin screenshot
-        <input type="file" id="run-img-file" accept="image/*" style="display:none" onchange="parseRunImage(this)">
+      <label class="form-label">Import from GPS (optional)</label>
+      <div class="gpx-drop" onclick="document.getElementById('gpx-file').click()">
+        📁 Upload .gpx file — Strava or Garmin
+        <input type="file" id="gpx-file" accept=".gpx" style="display:none" onchange="parseGPX(this)">
       </div>
-      <img id="img-preview" class="img-preview" alt="Run screenshot preview">
-      <div id="img-status" class="gpx-status-msg" style="display:none"></div>
+      <div id="gpx-status" class="gpx-status-msg" style="display:none"></div>
       <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
         <label style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);white-space:nowrap">Max HR</label>
         <input type="number" id="max-hr-setting" placeholder="190" min="140" max="230" style="width:80px" oninput="S.set('maxHR', parseInt(this.value))">
@@ -434,20 +430,6 @@
       <div style="background:var(--card);padding:12px 10px;text-align:center"><div class="stat-val" id="res-mph">—</div><div class="stat-label">mph</div></div>
       <div style="background:var(--card);padding:12px 10px;text-align:center"><div class="stat-val" id="res-minmi">—</div><div class="stat-label">min/mile</div></div>
     </div>
-  </div>
-
-  <div class="card" style="margin:16px 16px 0">
-    <div class="card-label">AI Screenshot Settings</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5">
-      Needed to extract stats from Strava &amp; Garmin screenshots.<br>
-      Get your key at <span style="color:var(--accent)">console.anthropic.com</span>
-    </div>
-    <label class="form-label">Anthropic API Key</label>
-    <div style="display:flex;gap:8px;align-items:center">
-      <input type="password" id="anthropic-key" placeholder="sk-ant-..." style="flex:1" oninput="S.set('anthropicKey', this.value)">
-      <button class="btn-secondary" style="white-space:nowrap;padding:8px 14px;font-size:12px" onclick="clearApiKey()">Clear</button>
-    </div>
-    <div id="api-key-status" style="font-size:11px;margin-top:6px;color:var(--muted)"></div>
   </div>
 </div>
 
@@ -1038,8 +1020,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
   const savedMaxHR = S.get('maxHR');
   if (savedMaxHR) document.getElementById('max-hr-setting').value = savedMaxHR;
-  const savedKey = S.get('anthropicKey');
-  if (savedKey) document.getElementById('anthropic-key').value = savedKey;
   ['log-dist','log-time'].forEach(id => {
     document.getElementById(id).addEventListener('input', () => {
       document.getElementById('log-pace').value = calcPaceStr(document.getElementById('log-dist').value, document.getElementById('log-time').value);
@@ -1102,10 +1082,10 @@ function saveRun() {
     notes: document.getElementById('log-notes').value
   };
 
-  // Attach screenshot/image data if present
-  if (window._pendingImageData) {
-    Object.assign(run, window._pendingImageData);
-    window._pendingImageData = null;
+  // Attach GPX data if present
+  if (window._pendingGpxData) {
+    Object.assign(run, window._pendingGpxData);
+    window._pendingGpxData = null;
   }
 
   const runs = S.runs();
@@ -1140,12 +1120,9 @@ function clearForm() {
   document.getElementById('log-rpe').value = '5';
   document.getElementById('rpe-display').textContent = '5';
   document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
-  document.getElementById('img-status').style.display = 'none';
-  const previewEl = document.getElementById('img-preview');
-  previewEl.style.display = 'none';
-  previewEl.src = '';
-  resetImgDrop();
-  window._pendingImageData = null;
+  document.getElementById('gpx-status').style.display = 'none';
+  document.getElementById('gpx-file').value = '';
+  window._pendingGpxData = null;
 }
 
 // ============================================================
@@ -1189,7 +1166,7 @@ function renderStats() {
     const d = new Date(r.date + 'T12:00:00');
     const rpeColor = r.rpe >= 8 ? 'var(--red)' : r.rpe >= 5 ? 'var(--orange)' : 'var(--green)';
     const walkNote = r.walkDeducted > 0 ? `<div class="run-sub" style="color:var(--muted2)">${r.walkDeducted}min walk deducted</div>` : '';
-    const sourceBadge = r.source === 'gpx' ? `<span style="font-size:9px;padding:1px 5px;background:rgba(123,108,186,0.15);border:1px solid rgba(123,108,186,0.3);color:var(--purple);letter-spacing:1px">GPS</span> ` : r.source === 'screenshot' ? `<span style="font-size:9px;padding:1px 5px;background:rgba(60,184,122,0.12);border:1px solid rgba(60,184,122,0.3);color:var(--accent);letter-spacing:1px">📸</span> ` : '';
+    const gpxBadge = r.source === 'gpx' ? `<span style="font-size:9px;padding:1px 5px;background:rgba(123,108,186,0.15);border:1px solid rgba(123,108,186,0.3);color:var(--purple);letter-spacing:1px">GPS</span> ` : '';
 
     // Build GPX extras
     let extrasHtml = '';
@@ -1215,12 +1192,11 @@ function renderStats() {
     item.style.alignItems = 'stretch';
     const extrasId = `extras-${ri}`;
     item.innerHTML = `
-      ${r.image ? `<img src="${r.image}" style="width:100%;max-height:120px;object-fit:cover;border-radius:6px;margin-bottom:8px" alt="Run screenshot">` : ''}
       <div style="display:flex;align-items:center;gap:12px">
         <div class="run-date-box"><div class="run-date-day">${d.getDate()}</div><div class="run-date-month">${d.toLocaleString('default',{month:'short'}).toUpperCase()}</div></div>
         <div class="run-divider"></div>
         <div class="run-stats">
-          <div class="run-main">${sourceBadge}${r.dist} km · ${r.time}</div>
+          <div class="run-main">${gpxBadge}${r.dist} km · ${r.time}</div>
           <div class="run-sub">${r.type ? r.type.charAt(0).toUpperCase()+r.type.slice(1) : 'Run'}${r.hr?' · ❤️ '+r.hr:''}${r.cal?' · 🔥 '+r.cal+' kcal':''}</div>
           ${walkNote}
           ${r.rpe?`<span class="rpe-badge" style="background:rgba(30,26,22,0.08);border:1px solid ${rpeColor};color:${rpeColor}">RPE ${r.rpe}</span>`:''}
@@ -1436,138 +1412,107 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-function resetImgDrop() {
-  document.getElementById('img-drop').innerHTML = '📸 Upload Strava or Garmin screenshot<input type="file" id="run-img-file" accept="image/*" style="display:none" onchange="parseRunImage(this)">';
-}
-
-function compressImage(dataUrl, maxWidth, quality) {
-  return new Promise(resolve => {
-    const img = new Image();
-    img.onload = () => {
-      const scale = Math.min(1, maxWidth / img.width);
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.round(img.width * scale);
-      canvas.height = Math.round(img.height * scale);
-      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL('image/jpeg', quality));
-    };
-    img.src = dataUrl;
-  });
-}
-
-function clearApiKey() {
-  S.set('anthropicKey', '');
-  document.getElementById('anthropic-key').value = '';
-  document.getElementById('api-key-status').textContent = 'API key cleared';
-}
-
-async function parseRunImage(input) {
+function parseGPX(input) {
   const file = input.files[0];
   if (!file) return;
-
   const reader = new FileReader();
-  reader.onload = async e => {
-    // Show image preview immediately
-    const previewEl = document.getElementById('img-preview');
-    previewEl.src = e.target.result;
-    previewEl.style.display = 'block';
-
-    // Compress: API-sized (1024px, 80%) and thumbnail (300px, 60%)
-    const compressedBase64 = await compressImage(e.target.result, 1024, 0.8);
-    const base64Data = compressedBase64.split(',')[1];
-    const thumbBase64 = await compressImage(e.target.result, 300, 0.6);
-
-    const apiKey = S.get('anthropicKey');
-    if (!apiKey) {
-      showToast('Add Anthropic API key in Calc tab');
-      const statusEl = document.getElementById('img-status');
-      statusEl.style.display = 'block';
-      statusEl.style.color = 'var(--orange)';
-      statusEl.textContent = '⚠ No API key — enter stats manually or add key in Calc tab';
-      window._pendingImageData = { image: thumbBase64, source: 'screenshot' };
-      return;
-    }
-
-    // Show processing state
-    const drop = document.getElementById('img-drop');
-    drop.classList.add('processing');
-    drop.childNodes[0].textContent = '⏳ Analysing screenshot...';
-    document.getElementById('img-status').style.display = 'none';
-
+  reader.onload = e => {
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 300,
-          messages: [{
-            role: 'user',
-            content: [
-              { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64Data } },
-              { type: 'text', text: 'Extract running activity stats from this screenshot (Strava, Garmin, or similar app). Return ONLY valid JSON with no other text: {"distance_km": number_or_null, "time": "H:MM:SS_or_MM:SS_or_null", "pace": "M:SS_or_null", "avg_hr": number_or_null, "calories": number_or_null, "date": "YYYY-MM-DD_or_null"}. If distance is in miles convert to km (×1.60934). If pace is per mile convert to per km (÷1.60934). Use null for any field not visible.' }
-            ]
-          }]
-        })
-      });
+      const xml = new DOMParser().parseFromString(e.target.result, 'text/xml');
+      const trkpts = Array.from(xml.querySelectorAll('trkpt'));
+      if (!trkpts.length) { showToast('No track points found'); return; }
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error?.message || `API error ${response.status}`);
+      const points = trkpts.map(pt => {
+        const lat = parseFloat(pt.getAttribute('lat'));
+        const lon = parseFloat(pt.getAttribute('lon'));
+        const timeEl = pt.querySelector('time');
+        const time = timeEl ? new Date(timeEl.textContent) : null;
+        const hrNodes = pt.getElementsByTagNameNS('*', 'hr');
+        const cadNodes = pt.getElementsByTagNameNS('*', 'cad');
+        return {
+          lat, lon, time,
+          hr: hrNodes.length ? parseInt(hrNodes[0].textContent) : null,
+          cad: cadNodes.length ? parseInt(cadNodes[0].textContent) : null
+        };
+      }).filter(p => !isNaN(p.lat) && !isNaN(p.lon));
+
+      // Cumulative distance
+      let totalDist = 0;
+      const cumDist = [0];
+      for (let i = 1; i < points.length; i++) {
+        totalDist += haversine(points[i-1].lat, points[i-1].lon, points[i].lat, points[i].lon);
+        cumDist.push(totalDist);
       }
 
-      const data = await response.json();
-      const text = data.content[0].text.trim();
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('No JSON returned');
-      const stats = JSON.parse(jsonMatch[0]);
+      // Total time
+      const t0 = points[0].time, tN = points[points.length-1].time;
+      const totalSecs = (t0 && tN) ? Math.round((tN - t0) / 1000) : 0;
 
-      // Populate form fields
-      if (stats.distance_km) document.getElementById('log-dist').value = parseFloat(stats.distance_km).toFixed(2);
-      if (stats.time) document.getElementById('log-time').value = stats.time;
-      if (stats.avg_hr) document.getElementById('log-hr').value = stats.avg_hr;
-      if (stats.calories) document.getElementById('log-cal').value = stats.calories;
-      if (stats.date) document.getElementById('log-date').value = stats.date;
-      if (stats.distance_km && stats.time) {
-        document.getElementById('log-pace').value = calcPaceStr(parseFloat(stats.distance_km).toFixed(2), stats.time);
-      } else if (stats.pace) {
-        document.getElementById('log-pace').value = stats.pace;
+      // Km splits
+      const splits = [];
+      let kmCount = 1, splitStartTime = t0;
+      for (let i = 1; i < points.length; i++) {
+        if (cumDist[i] >= kmCount) {
+          const segDist = cumDist[i] - cumDist[i-1];
+          const frac = segDist > 0 ? 1 - (cumDist[i]-kmCount)/segDist : 1;
+          const splitEnd = (points[i-1].time && points[i].time)
+            ? new Date(points[i-1].time.getTime() + (points[i].time - points[i-1].time)*frac)
+            : points[i].time;
+          const splitSecs = (splitStartTime && splitEnd) ? Math.round((splitEnd - splitStartTime)/1000) : 0;
+          if (splitSecs > 0) splits.push({ km: kmCount, pace: `${Math.floor(splitSecs/60)}:${Math.round(splitSecs%60).toString().padStart(2,'0')}` });
+          splitStartTime = splitEnd;
+          kmCount++;
+        }
       }
 
-      window._pendingImageData = { image: thumbBase64, source: 'screenshot' };
+      // HR zones
+      const hrPts = points.filter(p => p.hr);
+      let avgHR = null, hrZones = null;
+      if (hrPts.length) {
+        avgHR = Math.round(hrPts.reduce((s,p) => s+p.hr, 0) / hrPts.length);
+        const maxHR = parseInt(S.get('maxHR') || 190);
+        const secPerPt = totalSecs / points.length;
+        hrZones = {z1:0,z2:0,z3:0,z4:0,z5:0};
+        hrPts.forEach(p => {
+          const pct = p.hr / maxHR;
+          if (pct < 0.60) hrZones.z1 += secPerPt;
+          else if (pct < 0.70) hrZones.z2 += secPerPt;
+          else if (pct < 0.80) hrZones.z3 += secPerPt;
+          else if (pct < 0.90) hrZones.z4 += secPerPt;
+          else hrZones.z5 += secPerPt;
+        });
+        Object.keys(hrZones).forEach(k => hrZones[k] = Math.round(hrZones[k]));
+      }
 
-      const parts = [];
-      if (stats.distance_km) parts.push(`${parseFloat(stats.distance_km).toFixed(2)} km`);
-      if (stats.time) parts.push(stats.time);
-      if (stats.avg_hr) parts.push(`HR ${stats.avg_hr} bpm`);
-      if (stats.calories) parts.push(`${stats.calories} kcal`);
+      // Cadence
+      const cadPts = points.filter(p => p.cad);
+      const avgCadence = cadPts.length ? Math.round(cadPts.reduce((s,p)=>s+p.cad,0)/cadPts.length) : null;
+      const maxCadence = cadPts.length ? Math.max(...cadPts.map(p=>p.cad)) : null;
 
-      const statusEl = document.getElementById('img-status');
+      // Format time
+      const timeStr = totalSecs >= 3600
+        ? `${Math.floor(totalSecs/3600)}:${Math.floor((totalSecs%3600)/60).toString().padStart(2,'0')}:${Math.round(totalSecs%60).toString().padStart(2,'0')}`
+        : `${Math.floor(totalSecs/60)}:${Math.round(totalSecs%60).toString().padStart(2,'0')}`;
+
+      const distStr = totalDist.toFixed(2);
+      if (t0) document.getElementById('log-date').value = t0.toISOString().split('T')[0];
+      document.getElementById('log-dist').value = distStr;
+      document.getElementById('log-time').value = timeStr;
+      if (avgHR) document.getElementById('log-hr').value = avgHR;
+      document.getElementById('log-pace').value = calcPaceStr(distStr, timeStr);
+
+      window._pendingGpxData = { splits: splits.length ? splits : null, hrZones, avgCadence, maxCadence, source: 'gpx' };
+
+      const statusEl = document.getElementById('gpx-status');
       statusEl.style.display = 'block';
-      statusEl.style.color = 'var(--green)';
-      statusEl.textContent = `✓ ${parts.length ? parts.join(' · ') : 'Stats read — check fields above'}`;
-
-      resetImgDrop();
-      drop.classList.remove('processing');
-      showToast('Screenshot analysed!');
-
-    } catch (err) {
-      resetImgDrop();
-      document.getElementById('img-drop').classList.remove('processing');
-      const statusEl = document.getElementById('img-status');
-      statusEl.style.display = 'block';
-      statusEl.style.color = 'var(--orange)';
-      statusEl.textContent = `⚠ ${err.message} — enter stats manually`;
-      window._pendingImageData = { image: thumbBase64, source: 'screenshot' };
-      showToast('Could not read stats — fill in manually');
+      statusEl.textContent = `✓ ${distStr} km · ${timeStr}${splits.length?' · '+splits.length+' splits':''}${avgHR?' · HR '+avgHR+' bpm':''}${avgCadence?' · '+avgCadence+' spm':''}`;
+      showToast('GPX imported!');
+    } catch(err) {
+      showToast('Error reading GPX file');
       console.error(err);
     }
   };
-  reader.readAsDataURL(file);
+  reader.readAsText(file);
 }
 
 // ============================================================
